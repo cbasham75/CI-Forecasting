@@ -438,7 +438,7 @@ select option { background: var(--bg3); }
                   <th>End</th>
                   <th>Hours</th>
                   <th>Techs</th>
-                  <th>Man-days</th>
+                  <th>Tech days</th>
                   <th>Price</th>
                   <th>Margin</th>
                   <th>Margin $</th>
@@ -555,19 +555,22 @@ select option { background: var(--bg3); }
       </div>
       <div class="form-group">
         <label class="form-label">Start date</label>
-        <input id="f-start" type="date">
+        <input id="f-start" type="date" oninput="calcEndDate()" onchange="calcEndDate()">
       </div>
       <div class="form-group">
-        <label class="form-label">End date</label>
-        <input id="f-end" type="date">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Total hours</label>
-        <input id="f-hours" type="number" placeholder="e.g. 160" min="1">
+        <label class="form-label">Total tech hours</label>
+        <input id="f-hours" type="number" placeholder="e.g. 160" min="1" oninput="calcEndDate()" onchange="calcEndDate()">
       </div>
       <div class="form-group">
         <label class="form-label">Number of techs</label>
-        <input id="f-techs" type="number" placeholder="e.g. 2" min="1">
+        <input id="f-techs" type="number" placeholder="e.g. 2" min="1" oninput="calcEndDate()" onchange="calcEndDate()">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+          End date
+          <span id="end-date-calc-note" style="font-size:10px;color:var(--ci-teal-light);font-weight:400;font-style:italic"></span>
+        </label>
+        <input id="f-end" type="date" placeholder="Auto-calculated from hours &amp; techs">
       </div>
       <div class="form-group">
         <label class="form-label">Total price ($)</label>
@@ -731,9 +734,9 @@ function renderProjects() {
       <div class="metric-sub">${avgMargin.toFixed(1)}% average</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Total man-days</div>
+      <div class="metric-label">Total tech days</div>
       <div class="metric-value">${data.reduce((s,p)=>s+manDays(p),0)}</div>
-      <div class="metric-sub">${data.reduce((s,p)=>s+p.hours,0)} total hours</div>
+      <div class="metric-sub">${data.reduce((s,p)=>s+p.hours,0)} total tech hours</div>
     </div>`;
 
   document.getElementById('proj-table-title').textContent =
@@ -774,18 +777,58 @@ async function deleteProject(id) {
 }
 
 // ─────────────────────────────────────────────
-//  MODAL
+//  END DATE AUTO-CALCULATION (weekdays only)
 // ─────────────────────────────────────────────
+function addWeekdays(startDate, days) {
+  const d = new Date(startDate);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) added++; // skip Sat/Sun
+  }
+  return d;
+}
+
+function calcEndDate() {
+  const start  = document.getElementById('f-start').value;
+  const hours  = parseFloat(document.getElementById('f-hours').value);
+  const techs  = parseInt(document.getElementById('f-techs').value);
+  const note   = document.getElementById('end-date-calc-note');
+  const endFld = document.getElementById('f-end');
+
+  if (!start || !hours || !techs || techs < 1) {
+    if (note) note.textContent = '';
+    return;
+  }
+
+  // tech days = total hours / (techs * 8hrs)
+  const techDays = Math.ceil(hours / (techs * 8));
+  // techDays - 1 because day 1 is the start date itself
+  const endDate = addWeekdays(start, techDays - 1);
+  const endStr  = endDate.toISOString().split('T')[0];
+
+  endFld.value = endStr;
+  if (note) note.textContent = `auto: ${techDays} weekday${techDays!==1?'s':''}`;
+}
+
+
 function openModal(id) {
   editId = id || null;
   document.getElementById('modal-title').textContent = id ? 'Edit project' : 'Add project';
-  const fields = ['f-name','f-start','f-end','f-hours','f-techs','f-price','f-margin'];
+  const note = document.getElementById('end-date-calc-note');
+  if (note) note.textContent = '';
   if (id) {
     const p = projects.find(x=>x.id===id);
-    const vals = [p.name,p.start,p.end,p.hours,p.techs,p.price,p.margin];
-    fields.forEach((f,i) => document.getElementById(f).value=vals[i]);
+    document.getElementById('f-name').value  = p.name;
+    document.getElementById('f-start').value = p.start;
+    document.getElementById('f-hours').value = p.hours;
+    document.getElementById('f-techs').value = p.techs;
+    document.getElementById('f-end').value   = p.end;
+    document.getElementById('f-price').value = p.price;
+    document.getElementById('f-margin').value= p.margin;
   } else {
-    fields.forEach(f => document.getElementById(f).value='');
+    ['f-name','f-start','f-hours','f-techs','f-end','f-price','f-margin'].forEach(f => document.getElementById(f).value='');
   }
   document.getElementById('modal').classList.add('open');
 }
