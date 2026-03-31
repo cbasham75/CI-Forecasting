@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cabling Innovations – Project Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1e26;
+  --bg2: #132a35;
+  --bg3: #1a3545;
+  --bg4: #214054;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #edf1f3;
+  --text2: #7fa5b5;
+  --text3: #4d7a8a;
+  --accent: #e05a22;
+  --accent2: #4da8c4;
+  --accent3: #e8803a;
+  --accent4: #d94f1e;
+  --accent5: #2d6f84;
+  --ci-orange: #e05a22;
+  --ci-teal: #2d5f72;
+  --ci-teal-light: #4da8c4;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* LAYOUT */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.sidebar-logo span { color: var(--accent); }
+
+.sidebar-nav { padding: 12px 10px; flex: 1; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 400;
+  transition: all .15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(224,90,34,0.15); color: var(--ci-orange); font-weight: 500; border-left: 2px solid var(--ci-orange); }
+.nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-bottom {
+  padding: 12px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-title { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+.topbar-actions { display: flex; gap: 8px; }
+
+.content { padding: 24px 28px; flex: 1; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text); transition: all .15s; font-family: inherit;
+  text-decoration: none;
+}
+.btn:hover { background: var(--bg4); border-color: var(--border2); }
+.btn-primary { background: var(--ci-orange); border-color: var(--ci-orange); color: #fff; }
+.btn-primary:hover { background: #c44d1b; border-color: #c44d1b; }
+.btn-success { background: rgba(224,90,34,0.15); border-color: rgba(224,90,34,0.3); color: var(--ci-orange); }
+.btn-success:hover { background: rgba(224,90,34,0.22); }
+.btn-danger { background: rgba(235,87,87,0.12); border-color: rgba(235,87,87,0.25); color: var(--accent4); }
+.btn-danger:hover { background: rgba(235,87,87,0.2); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon { padding: 6px; border-radius: var(--radius-sm); }
+
+/* METRICS */
+.metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.metric-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.metric-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.metric-value { font-size: 24px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); }
+.metric-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.metric-accent { color: var(--ci-orange); }
+
+/* TABLE */
+.table-wrap {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.table-header-title { font-size: 13px; font-weight: 500; color: var(--text2); }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  white-space: nowrap;
+}
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg3); }
+
+.proj-name { font-weight: 500; max-width: 200px; white-space: normal; line-height: 1.3; }
+.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+
+/* BADGES */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; letter-spacing: .02em;
+}
+.badge-active { background: rgba(77,168,196,0.15); color: #4da8c4; }
+.badge-upcoming { background: rgba(224,90,34,0.12); color: #e07a52; }
+.badge-done { background: rgba(90,96,112,0.2); color: var(--text3); }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 200;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 28px;
+  width: min(540px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.modal-title { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+.modal-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+.modal-close:hover { color: var(--text); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-full { grid-column: 1/-1; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+input, select {
+  padding: 9px 12px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color .15s;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+input::placeholder { color: var(--text3); }
+select option { background: var(--bg3); }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+/* GANTT */
+.gantt-legend {
+  display: flex; gap: 20px; margin-bottom: 16px;
+  flex-wrap: wrap; align-items: center;
+}
+.gantt-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+.gantt-note {
+  font-size: 11px; color: var(--text3); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.chart-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.chart-card-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.chart-card-sub { font-size: 20px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 16px; }
+
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-grid-full { grid-column: 1/-1; }
+
+.rev-tabs { display: flex; gap: 4px; background: var(--bg3); border-radius: var(--radius-sm); padding: 3px; }
+.rev-tab { padding: 5px 14px; border-radius: 4px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text2); background: none; border: none; font-family: inherit; transition: all .15s; }
+.rev-tab.active { background: var(--bg4); color: var(--text); }
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.filter-bar select { padding: 7px 10px; font-size: 12px; min-width: 140px; }
+
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; }
+
+/* GANTT CANVAS */
+#gantt-canvas { display: block; max-width: 100%; border-radius: var(--radius-sm); }
+.gantt-wrap { overflow-x: auto; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+
+/* ═══════════════════════════════════════════════
+   PRINT / PDF STYLES
+   ═══════════════════════════════════════════════ */
+@media print {
+  @page { margin: 16mm 14mm; size: A4 landscape; }
+
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  body {
+    background: #ffffff !important;
+    color: #111 !important;
+    font-size: 11px;
+  }
+
+  /* Hide shell chrome */
+  .sidebar, .topbar, .filter-bar, .btn, .modal-overlay,
+  .topbar-actions, .no-print { display: none !important; }
+
+  .shell { display: block !important; height: auto !important; overflow: visible !important; }
+  .main { overflow: visible !important; height: auto !important; }
+  .content { padding: 0 !important; }
+
+  /* Show all sections for print */
+  .section { display: block !important; page-break-after: always; }
+  .section:last-child { page-break-after: avoid; }
+
+  /* Print header injected by JS */
+  .print-page-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid #ddd;
+  }
+  .print-page-header h2 { font-size: 16px; font-weight: 700; color: #111; }
+  .print-page-header span { font-size: 11px; color: #666; }
+
+  /* Metrics */
+  .metrics-row { grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .metric-card {
+    background: #f5f7fa !important;
+    border: 1px solid #e2e6ed !important;
+    padding: 12px 14px;
+  }
+  .metric-label { color: #666 !important; }
+  .metric-value { font-size: 18px !important; color: #111 !important; }
+  .metric-sub { color: #888 !important; }
+  .metric-accent { color: #1a7a3e !important; }
+
+  /* Table */
+  .table-wrap { border: 1px solid #e2e6ed !important; border-radius: 6px !important; overflow: hidden !important; }
+  .table-header { background: #f5f7fa !important; }
+  .table-header-title { color: #555 !important; }
+  th { background: #f0f3f8 !important; color: #555 !important; border-bottom: 1px solid #ddd !important; padding: 7px 10px !important; }
+  td { border-bottom: 1px solid #eee !important; color: #111 !important; padding: 8px 10px !important; }
+  tbody tr:last-child td { border-bottom: none !important; }
+  tbody tr:hover td { background: none !important; }
+  .proj-name { color: #111 !important; }
+  .mono { color: #333 !important; }
+
+  .badge-active { background: #dcf5e7 !important; color: #1a7a3e !important; }
+  .badge-upcoming { background: #ddeeff !important; color: #1a4fa0 !important; }
+  .badge-done { background: #eee !important; color: #555 !important; }
+
+  /* Gantt */
+  .gantt-wrap {
+    background: #fff !important;
+    border: 1px solid #e2e6ed !important;
+    padding: 12px !important;
+  }
+  #gantt-canvas { width: 100% !important; max-width: 100% !important; }
+  .gantt-legend-item { color: #555 !important; }
+  .gantt-note { color: #888 !important; }
+
+  /* Charts */
+  .chart-card { background: #f5f7fa !important; border: 1px solid #e2e6ed !important; padding: 14px !important; }
+  .chart-card-title { color: #666 !important; }
+  .chart-card-sub { color: #111 !important; }
+  .charts-grid { gap: 10px !important; }
+  .rev-tabs { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo" style="padding:14px 16px 14px;background:#fff;border-bottom:1px solid rgba(0,0,0,0.08)">
+      <img src="data:image/webp;base64,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" alt="Cabling Innovations LLC" style="width:100%;max-width:180px;height:auto;display:block">
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showSection('projects')">
+        <span class="icon">◧</span> Projects
+      </button>
+      <button class="nav-item" onclick="showSection('gantt')">
+        <span class="icon">▤</span> Gantt chart
+      </button>
+      <button class="nav-item" onclick="showSection('revenue')">
+        <span class="icon">◈</span> Revenue
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn btn-success" style="width:100%;justify-content:center;font-weight:600" onclick="exportPDF()">
+        ↓ Export PDF
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Projects</span>
+      <div class="topbar-actions">
+        <button class="btn no-print" onclick="exportPDF()">↓ Export PDF</button>
+        <button class="btn btn-primary no-print" onclick="openModal()">+ Add project</button>
+      </div>
+    </div>
+    <div id="status-bar" style="display:none;padding:7px 28px;font-size:12px;font-weight:500;transition:all .3s"></div>
+
+    <div class="content">
+
+      <!-- ═══ PROJECTS SECTION ═══ -->
+      <div class="section active" id="section-projects">
+        <div class="print-page-header" style="display:none">
+          <div>
+            <h2>Projects</h2>
+            <span id="print-date-projects"></span>
+          </div>
+          <span id="print-count"></span>
+        </div>
+
+        <div class="metrics-row" id="proj-metrics"></div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <span class="table-header-title" id="proj-table-title">All projects</span>
+            <div class="filter-bar no-print" style="margin:0">
+              <select id="status-filter" onchange="renderProjects()">
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="done">Complete</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Hours</th>
+                  <th>Techs</th>
+                  <th>Man-days</th>
+                  <th>Price</th>
+                  <th>Margin</th>
+                  <th>Margin $</th>
+                  <th>Status</th>
+                  <th class="no-print"></th>
+                </tr>
+              </thead>
+              <tbody id="proj-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ GANTT SECTION ═══ -->
+      <div class="section" id="section-gantt">
+        <div class="print-page-header" style="display:none">
+          <div><h2>Gantt Chart &amp; Tech Load</h2><span id="print-date-gantt"></span></div>
+        </div>
+
+        <div class="filter-bar no-print" style="margin-bottom:16px">
+          <select id="gantt-filter" onchange="renderGantt()">
+            <option value="all">All projects</option>
+            <option value="active">Active only</option>
+            <option value="upcoming">Upcoming only</option>
+          </select>
+          <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px;margin-left:8px">
+            Team capacity:
+            <input id="team-capacity" type="number" min="1" max="200" value="10"
+              style="width:64px;padding:5px 8px;font-size:13px"
+              oninput="renderGantt()">
+            techs
+          </label>
+          <span id="overload-badge" style="display:none;background:rgba(224,90,34,0.15);color:#e05a22;border:1px solid rgba(224,90,34,0.3);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500"></span>
+        </div>
+
+        <div class="gantt-note">
+          <span>←</span> Timeline: right = earliest, left = latest &nbsp;|&nbsp;
+          <span style="color:#e05a22">━━</span> Today &nbsp;|&nbsp;
+          <span style="color:#e05a22">▓</span> Over capacity &nbsp;|&nbsp;
+          <span style="color:#e05a22">━━</span> Capacity line
+        </div>
+
+        <div class="gantt-legend" style="margin-bottom:12px">
+          <div class="gantt-legend-item"><div class="legend-dot" style="background:#4da8c4"></div>Active</div>
+          <div class="gantt-legend-item"><div class="legend-dot" style="background:#e07a52"></div>Upcoming</div>
+          <div class="gantt-legend-item"><div class="legend-dot" style="background:#2d6f84"></div>Complete</div>
+        </div>
+
+        <!-- Tooltip for hover -->
+        <div id="gantt-tooltip" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4);min-width:180px"></div>
+
+        <div class="gantt-wrap" style="padding:0;overflow:hidden">
+          <canvas id="gantt-canvas" style="cursor:crosshair"></canvas>
+        </div>
+      </div>
+
+      <!-- ═══ REVENUE SECTION ═══ -->
+      <div class="section" id="section-revenue">
+        <div class="print-page-header" style="display:none">
+          <div><h2>Revenue & Margin</h2><span id="print-date-revenue"></span></div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+          <div class="rev-tabs no-print">
+            <button class="rev-tab active" id="rev-monthly-btn" onclick="setRevView('monthly')">Monthly</button>
+            <button class="rev-tab" id="rev-ytd-btn" onclick="setRevView('ytd')">Year to date</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center" class="no-print">
+            <select id="rev-year" onchange="renderRevenue()" style="font-size:12px;padding:6px 10px"></select>
+          </div>
+        </div>
+
+        <div class="metrics-row" id="rev-metrics" style="margin-bottom:20px"></div>
+
+        <div class="charts-grid">
+          <div class="chart-card chart-grid-full">
+            <div class="chart-card-title" id="rev-bar-title">Monthly revenue & margin ($)</div>
+            <div style="display:flex;gap:16px;margin-bottom:12px;font-size:11px;color:var(--text2)">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#4da8c4;border-radius:2px;display:inline-block"></span>Revenue</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#e05a22;border-radius:2px;display:inline-block"></span>Margin $</span>
+            </div>
+            <div style="position:relative;height:220px"><canvas id="rev-chart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title" id="margin-pct-title">Margin %</div>
+            <div style="position:relative;height:180px"><canvas id="margin-chart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Revenue &amp; profit by project (year)</div>
+            <div style="display:flex;gap:14px;margin-bottom:10px;font-size:11px;color:var(--text2)">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#4da8c4;border-radius:2px;display:inline-block"></span>Revenue</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#e05a22;border-radius:2px;display:inline-block"></span>Profit</span>
+            </div>
+            <div style="position:relative;height:180px"><canvas id="proj-rev-chart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title">Add project</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group form-full">
+        <label class="form-label">Project name</label>
+        <input id="f-name" type="text" placeholder="e.g. HVAC Retrofit – Warehouse A">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Start date</label>
+        <input id="f-start" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">End date</label>
+        <input id="f-end" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total hours</label>
+        <input id="f-hours" type="number" placeholder="e.g. 160" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Number of techs</label>
+        <input id="f-techs" type="number" placeholder="e.g. 2" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total price ($)</label>
+        <input id="f-price" type="number" placeholder="e.g. 24000" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Projected margin (%)</label>
+        <input id="f-margin" type="number" placeholder="e.g. 35" min="0" max="100">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()">Save project</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  SUPABASE CONFIG
+// ─────────────────────────────────────────────
+const SB_URL = 'https://pwbzmkcgbnshhpwyztac.supabase.co';
+const SB_KEY = 'sb_publishable_uNYU0KFs0Ar2FEafyp3IFw_n5u-Iy8b';
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'return=representation'
+};
+
+async function sbFetch(method, path, body) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    method,
+    headers: SB_HEADERS,
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// ─────────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────────
+let projects = [];
+let editId = null;
+let revView = 'monthly';
+let revChartInst = null, marginChartInst = null, projRevChartInst = null;
+
+function showStatus(msg, isError = false) {
+  let bar = document.getElementById('status-bar');
+  if (!bar) return;
+  bar.textContent = msg;
+  bar.style.background = isError ? 'rgba(224,90,34,0.18)' : 'rgba(77,168,196,0.15)';
+  bar.style.color = isError ? '#e05a22' : '#4da8c4';
+  bar.style.display = 'block';
+  if (!isError) setTimeout(() => { bar.style.display = 'none'; }, 2500);
+}
+
+async function loadProjects() {
+  showStatus('Loading projects…');
+  try {
+    const data = await sbFetch('GET', 'projects?order=start_date.desc');
+    projects = data.map(r => ({
+      id: r.id,
+      name: r.name,
+      start: r.start_date,
+      end: r.end_date,
+      hours: r.hours,
+      techs: r.techs,
+      price: r.price,
+      margin: r.margin
+    }));
+    showStatus('Loaded ✓');
+    renderAll();
+  } catch(e) {
+    showStatus('Connection error — check Supabase setup. ' + e.message, true);
+  }
+}
+
+async function dbInsert(p) {
+  const rows = await sbFetch('POST', 'projects', {
+    name: p.name, start_date: p.start, end_date: p.end,
+    hours: p.hours, techs: p.techs, price: p.price, margin: p.margin
+  });
+  return rows[0];
+}
+
+async function dbUpdate(p) {
+  await sbFetch('PATCH', `projects?id=eq.${p.id}`, {
+    name: p.name, start_date: p.start, end_date: p.end,
+    hours: p.hours, techs: p.techs, price: p.price, margin: p.margin
+  });
+}
+
+async function dbDelete(id) {
+  await sbFetch('DELETE', `projects?id=eq.${id}`);
+}
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+function getStatus(p) {
+  const now = new Date(), s = new Date(p.start), e = new Date(p.end);
+  if (now < s) return 'upcoming';
+  if (now > e) return 'done';
+  return 'active';
+}
+function manDays(p) { return Math.ceil(p.hours / (p.techs * 8)); }
+function fmtDate(v) { return new Date(v).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function fmtMoney(v, short=false) {
+  if (short) return v >= 1000 ? '$'+(v/1000).toFixed(0)+'k' : '$'+v;
+  return '$'+Number(v).toLocaleString();
+}
+
+// ─────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────
+const sectionTitles = { projects:'Projects', gantt:'Gantt Chart', revenue:'Revenue & Margin' };
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[['projects','gantt','revenue'].indexOf(name)].classList.add('active');
+  document.getElementById('topbar-title').textContent = sectionTitles[name];
+  if (name==='gantt') setTimeout(renderGantt, 50);
+  if (name==='revenue') renderRevenue();
+}
+
+// ─────────────────────────────────────────────
+//  PROJECTS
+// ─────────────────────────────────────────────
+function renderProjects() {
+  const filter = document.getElementById('status-filter').value;
+  let data = [...projects].sort((a,b) => new Date(b.start)-new Date(a.start));
+  if (filter !== 'all') data = data.filter(p => getStatus(p)===filter);
+
+  const totalRev = data.reduce((s,p)=>s+p.price,0);
+  const totalMargin = data.reduce((s,p)=>s+(p.price*p.margin/100),0);
+  const avgMargin = totalRev ? (totalMargin/totalRev*100) : 0;
+  const activeCount = projects.filter(p=>getStatus(p)==='active').length;
+
+  document.getElementById('proj-metrics').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">Total projects</div>
+      <div class="metric-value">${projects.length}</div>
+      <div class="metric-sub">${activeCount} active now</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total revenue</div>
+      <div class="metric-value metric-accent">${fmtMoney(totalRev)}</div>
+      <div class="metric-sub">across ${data.length} projects</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total margin</div>
+      <div class="metric-value">${fmtMoney(Math.round(totalMargin))}</div>
+      <div class="metric-sub">${avgMargin.toFixed(1)}% average</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total man-days</div>
+      <div class="metric-value">${data.reduce((s,p)=>s+manDays(p),0)}</div>
+      <div class="metric-sub">${data.reduce((s,p)=>s+p.hours,0)} total hours</div>
+    </div>`;
+
+  document.getElementById('proj-table-title').textContent =
+    filter==='all' ? `All projects (${data.length})` : `${filter.charAt(0).toUpperCase()+filter.slice(1)} projects (${data.length})`;
+  document.getElementById('print-count').textContent = `${data.length} projects`;
+
+  document.getElementById('proj-tbody').innerHTML = data.map(p => {
+    const st = getStatus(p);
+    const marginDollar = Math.round(p.price * p.margin / 100);
+    return `<tr>
+      <td><div class="proj-name">${p.name}</div></td>
+      <td class="mono">${fmtDate(p.start)}</td>
+      <td class="mono">${fmtDate(p.end)}</td>
+      <td>${p.hours}h</td>
+      <td>${p.techs}</td>
+      <td>${manDays(p)}</td>
+      <td class="mono">${fmtMoney(p.price)}</td>
+      <td>${p.margin}%</td>
+      <td class="mono">${fmtMoney(marginDollar)}</td>
+      <td><span class="badge badge-${st}">${st}</span></td>
+      <td class="no-print" style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="openModal(${p.id})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProject(${p.id})">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteProject(id) {
+  if (!confirm('Delete this project?')) return;
+  try {
+    showStatus('Deleting…');
+    await dbDelete(id);
+    projects = projects.filter(p=>p.id!==id);
+    showStatus('Deleted ✓');
+    renderAll();
+  } catch(e) { showStatus('Delete failed: ' + e.message, true); }
+}
+
+// ─────────────────────────────────────────────
+//  MODAL
+// ─────────────────────────────────────────────
+function openModal(id) {
+  editId = id || null;
+  document.getElementById('modal-title').textContent = id ? 'Edit project' : 'Add project';
+  const fields = ['f-name','f-start','f-end','f-hours','f-techs','f-price','f-margin'];
+  if (id) {
+    const p = projects.find(x=>x.id===id);
+    const vals = [p.name,p.start,p.end,p.hours,p.techs,p.price,p.margin];
+    fields.forEach((f,i) => document.getElementById(f).value=vals[i]);
+  } else {
+    fields.forEach(f => document.getElementById(f).value='');
+  }
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function saveProject() {
+  const name = document.getElementById('f-name').value.trim();
+  const start = document.getElementById('f-start').value;
+  const end = document.getElementById('f-end').value;
+  const hours = parseFloat(document.getElementById('f-hours').value);
+  const techs = parseInt(document.getElementById('f-techs').value);
+  const price = parseFloat(document.getElementById('f-price').value);
+  const margin = parseFloat(document.getElementById('f-margin').value);
+  if (!name||!start||!end||!hours||!techs||isNaN(price)||isNaN(margin)) { alert('Please fill in all fields.'); return; }
+  if (new Date(end)<=new Date(start)) { alert('End date must be after start date.'); return; }
+  closeModal();
+  try {
+    if (editId) {
+      showStatus('Saving…');
+      const p = projects.find(x=>x.id===editId);
+      Object.assign(p, {name,start,end,hours,techs,price,margin});
+      await dbUpdate(p);
+      showStatus('Saved ✓');
+    } else {
+      showStatus('Adding project…');
+      const row = await dbInsert({name,start,end,hours,techs,price,margin});
+      projects.push({ id: row.id, name, start, end, hours, techs, price, margin });
+      showStatus('Project added ✓');
+    }
+    renderAll();
+  } catch(e) { showStatus('Save failed: ' + e.message, true); }
+}
+
+// ─────────────────────────────────────────────
+//  GANTT  (two-panel: project bars + tech load)
+// ─────────────────────────────────────────────
+
+// Store layout globals so mouse handler can use them
+let ganttLayout = null;
+
+function buildDailyTechLoad(data, minD, maxD) {
+  // For each calendar day in range, sum techs from all active projects
+  const days = Math.ceil((maxD - minD) / 864e5) + 1;
+  const load = new Array(days).fill(0);
+  const projects_on_day = new Array(days).fill(null).map(() => []);
+
+  data.forEach(p => {
+    const ps = new Date(p.start), pe = new Date(p.end);
+    for (let d = 0; d < days; d++) {
+      const day = new Date(minD.getTime() + d * 864e5);
+      if (day >= ps && day <= pe) {
+        load[d] += p.techs;
+        projects_on_day[d].push(p);
+      }
+    }
+  });
+  return { load, projects_on_day, days };
+}
+
+function renderGantt(isPrint = false) {
+  const canvas = document.getElementById('gantt-canvas');
+  if (!canvas) return;
+
+  const filterEl = document.getElementById('gantt-filter');
+  const filter = filterEl ? filterEl.value : 'all';
+  let data = [...projects].sort((a,b)=>new Date(b.start)-new Date(a.start));
+  if (filter==='active') data=data.filter(p=>getStatus(p)==='active');
+  if (filter==='upcoming') data=data.filter(p=>getStatus(p)==='upcoming');
+  if (!data.length) { canvas.width=100; canvas.height=60; return; }
+
+  const capacityEl = document.getElementById('team-capacity');
+  const CAPACITY = Math.max(1, parseInt(capacityEl ? capacityEl.value : 10) || 10);
+
+  const dpr = isPrint ? 1 : Math.min(window.devicePixelRatio||1, 2);
+  const container = canvas.parentElement;
+  const W = isPrint ? 960 : Math.max(container.clientWidth, 600);
+
+  // Layout constants
+  const LABEL_W = 195;
+  const TICK_W  = W - LABEL_W - 16;
+  const ROW     = 52;
+  const GANTT_PAD_TOP = 44;
+  const GANTT_H = GANTT_PAD_TOP + data.length * ROW;
+  const DIVIDER = 18;
+  const LOAD_H  = 140;   // height of load panel
+  const LOAD_PAD_TOP = 28;
+  const LOAD_PAD_BTM = 28;
+  const TOTAL_H = GANTT_H + DIVIDER + LOAD_H;
+
+  // Date range
+  const allDates = data.flatMap(p=>[new Date(p.start),new Date(p.end)]);
+  const minD = new Date(Math.min(...allDates)); minD.setDate(minD.getDate()-5);
+  const maxD = new Date(Math.max(...allDates)); maxD.setDate(maxD.getDate()+5);
+
+  // Build tech load
+  const { load, projects_on_day, days } = buildDailyTechLoad(data, minD, maxD);
+  const maxLoad = Math.max(CAPACITY, ...load);
+  const overloadDays = load.filter(l => l > CAPACITY).length;
+
+  // Update overload badge
+  const badge = document.getElementById('overload-badge');
+  if (badge) {
+    if (overloadDays > 0) {
+      badge.style.display = 'inline-flex';
+      badge.textContent = `⚠ ${overloadDays} day${overloadDays>1?'s':''} over capacity`;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  canvas.width  = W * dpr;
+  canvas.height = TOTAL_H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = TOTAL_H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Colors
+  const bg    = isPrint ? '#ffffff' : '#1d2436';
+  const bgAlt = isPrint ? '#f5f7fc' : '#212b3d';
+  const bgLoad= isPrint ? '#f9fafb' : '#181f2e';
+  const textC = isPrint ? '#111'    : '#e8eaf0';
+  const muted = isPrint ? '#777'    : '#8a90a2';
+  const gridC = isPrint ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.035)';
+  const barCol= {
+    active:   isPrint ? '#1a5f72' : '#4da8c4',
+    upcoming: isPrint ? '#a03d18' : '#e07a52',
+    done:     isPrint ? '#4a7a88' : '#2d6f84'
+  };
+  const overC = isPrint ? '#c0392b' : '#e05a22';
+  const safeC = isPrint ? '#1a5f72' : '#4da8c4';
+  const capC  = '#e05a22';
+
+  // ── Background ──
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, GANTT_H);
+  ctx.fillStyle = bgLoad;
+  ctx.fillRect(0, GANTT_H + DIVIDER, W, LOAD_H);
+
+  // ── Shared x helper: right=earliest, left=latest ──
+  function xForDate(d) {
+    const frac = (new Date(d) - minD) / (maxD - minD);
+    return LABEL_W + (1 - frac) * TICK_W;
+  }
+  function xForDayIndex(i) {
+    const frac = i / (days - 1);
+    return LABEL_W + (1 - frac) * TICK_W;
+  }
+
+  // ── Month grid lines (shared for both panels) ──
+  const tick = new Date(minD); tick.setDate(1);
+  while (tick <= maxD) {
+    const x = xForDate(tick);
+    if (x >= LABEL_W && x <= W - 4) {
+      ctx.strokeStyle = gridC;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x, GANTT_PAD_TOP); ctx.lineTo(x, TOTAL_H - LOAD_PAD_BTM); ctx.stroke();
+      // month label in gantt header
+      ctx.fillStyle = muted;
+      ctx.font = '500 10px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(tick.toLocaleDateString('en-US',{month:'short',year:'2-digit'}), x, 16);
+    }
+    tick.setMonth(tick.getMonth()+1);
+  }
+
+  // ── Direction labels ──
+  ctx.font = '10px DM Sans, sans-serif'; ctx.fillStyle = muted;
+  ctx.textAlign = 'left';  ctx.fillText('Earlier →', LABEL_W+6, 30);
+  ctx.textAlign = 'right'; ctx.fillText('← Later', W-4, 30);
+
+  // ── Alternating gantt rows ──
+  data.forEach((p, i) => {
+    if (i%2===0) {
+      ctx.fillStyle = bgAlt;
+      ctx.fillRect(0, GANTT_PAD_TOP + i*ROW, W, ROW);
+    }
+  });
+
+  // ── Today line ──
+  const todayX = xForDate(new Date());
+  ctx.save();
+  ctx.strokeStyle = overC; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(todayX, GANTT_PAD_TOP - 4); ctx.lineTo(todayX, TOTAL_H - LOAD_PAD_BTM); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+  ctx.font = '500 10px DM Sans, sans-serif'; ctx.fillStyle = overC; ctx.textAlign = 'center';
+  ctx.fillText('Today', todayX, GANTT_PAD_TOP - 6);
+
+  // ── Project bars ──
+  data.forEach((p, i) => {
+    const y = GANTT_PAD_TOP + i * ROW;
+    const xRight = xForDate(p.start);
+    const xLeft  = xForDate(p.end);
+    const barW   = Math.max(xRight - xLeft, 6);
+    const barH   = ROW - 14;
+    const barY   = y + 7;
+    const col    = barCol[getStatus(p)];
+
+    if (!isPrint) { ctx.shadowColor = col; ctx.shadowBlur = 6; }
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.roundRect(xLeft, barY, barW, barH, 4); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Techs badge inside bar
+    if (barW > 38) {
+      ctx.fillStyle = isPrint ? '#fff' : 'rgba(0,0,0,0.7)';
+      ctx.font = '500 11px DM Mono, monospace'; ctx.textAlign = 'center';
+      ctx.fillText(p.techs+'T', xLeft + barW/2, barY + barH/2 + 4);
+    }
+    // Project name
+    ctx.fillStyle = textC; ctx.font = '500 12px DM Sans, sans-serif'; ctx.textAlign = 'right';
+    const nm = p.name.length>26 ? p.name.slice(0,25)+'…' : p.name;
+    ctx.fillText(nm, LABEL_W-10, y + ROW/2 + 4);
+    // Price
+    ctx.fillStyle = muted; ctx.font = '10px DM Mono, monospace'; ctx.textAlign = 'left';
+    if (xLeft + barW + 5 + 40 < W)
+      ctx.fillText(fmtMoney(p.price,true), xLeft+barW+5, barY+barH/2+3);
+  });
+
+  // ── Divider ──
+  const divY = GANTT_H + DIVIDER/2;
+  ctx.strokeStyle = isPrint ? '#ccc' : 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(0, divY); ctx.lineTo(W, divY); ctx.stroke();
+  ctx.fillStyle = muted; ctx.font = '500 10px DM Sans, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('TECH LOAD / DAY', LABEL_W, divY + 5);
+
+  // ── Load panel ──
+  const loadTop  = GANTT_H + DIVIDER + LOAD_PAD_TOP;
+  const loadBot  = GANTT_H + DIVIDER + LOAD_H - LOAD_PAD_BTM;
+  const loadH    = loadBot - loadTop;
+
+  // Y-axis for load
+  function yForLoad(v) { return loadBot - (v / maxLoad) * loadH; }
+
+  // Draw load bars per day
+  const dayW = TICK_W / days;
+  for (let d = 0; d < days; d++) {
+    const techCount = load[d];
+    if (techCount === 0) continue;
+    const x = xForDayIndex(d);
+    const isOver = techCount > CAPACITY;
+    const barTop = yForLoad(techCount);
+    const safeTop = yForLoad(Math.min(techCount, CAPACITY));
+
+    // Safe portion
+    ctx.fillStyle = isPrint ? 'rgba(26,95,114,0.5)' : 'rgba(77,168,196,0.35)';
+    const safeH = loadBot - safeTop;
+    if (safeH > 0) ctx.fillRect(x - dayW/2, safeTop, dayW - 0.5, safeH);
+
+    // Over capacity portion
+    if (isOver) {
+      ctx.fillStyle = isPrint ? 'rgba(192,57,43,0.5)' : 'rgba(224,90,34,0.55)';
+      const overH = safeTop - barTop;
+      if (overH > 0) ctx.fillRect(x - dayW/2, barTop, dayW - 0.5, overH);
+    }
+  }
+
+  // Capacity line
+  const capY = yForLoad(CAPACITY);
+  ctx.strokeStyle = capC; ctx.lineWidth = 1.5; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(LABEL_W, capY); ctx.lineTo(W - 4, capY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = capC; ctx.font = '500 10px DM Sans, sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText(CAPACITY+' cap', LABEL_W - 4, capY + 4);
+
+  // Y-axis labels (load panel)
+  const yLabels = [0, Math.round(maxLoad/2), maxLoad];
+  yLabels.forEach(v => {
+    const y = yForLoad(v);
+    ctx.fillStyle = muted; ctx.font = '10px DM Mono, monospace'; ctx.textAlign = 'right';
+    ctx.fillText(v, LABEL_W - 6, y + 3);
+    ctx.strokeStyle = gridC; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(LABEL_W, y); ctx.lineTo(W-4, y); ctx.stroke();
+  });
+
+  // Load panel label
+  ctx.fillStyle = muted; ctx.font = '10px DM Sans, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('techs', 4, loadTop + 12);
+
+  // Over-capacity annotation
+  const peakLoad = Math.max(...load);
+  const peakDay  = load.indexOf(peakLoad);
+  if (peakLoad > CAPACITY) {
+    const px = xForDayIndex(peakDay);
+    const py = yForLoad(peakLoad) - 6;
+    ctx.fillStyle = overC; ctx.font = '500 11px DM Mono, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('▲'+peakLoad, px, py);
+  }
+
+  // Store layout for mouse events
+  ganttLayout = { LABEL_W, TICK_W, minD, maxD, days, GANTT_H, DIVIDER, LOAD_H,
+    loadTop, loadBot, loadH, maxLoad, CAPACITY, data, load, projects_on_day, xForDate, yForLoad, xForDayIndex };
+}
+
+// ── Gantt mouse tooltip ──
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('gantt-canvas');
+  const tooltip = document.getElementById('gantt-tooltip');
+  if (!canvas || !tooltip) return;
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (!ganttLayout) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const { LABEL_W, TICK_W, minD, maxD, days, GANTT_H, DIVIDER, LOAD_H,
+            data, load, projects_on_day, xForDate, ROW, GANTT_PAD_TOP, CAPACITY } = ganttLayout;
+    const _ROW = 52, _PAD = 44;
+
+    if (mx < LABEL_W) { tooltip.style.display='none'; return; }
+
+    // Which day index is cursor at?
+    const frac = 1 - (mx - LABEL_W) / TICK_W;
+    const dayIdx = Math.round(frac * (days - 1));
+    if (dayIdx < 0 || dayIdx >= days) { tooltip.style.display='none'; return; }
+
+    const dayDate = new Date(minD.getTime() + dayIdx * 864e5);
+    const techCount = load[dayIdx];
+    const projs = projects_on_day[dayIdx];
+    const cap = ganttLayout.CAPACITY;
+    const diff = techCount - cap;
+
+    let html = `<div style="font-weight:600;margin-bottom:6px;color:var(--text)">${dayDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>`;
+    html += `<div style="margin-bottom:6px;font-size:13px">`;
+    html += `<span style="color:${diff>0?'#e05a22':'#4da8c4'};font-weight:600">${techCount} tech${techCount!==1?'s':''}</span>`;
+    html += ` / <span style="color:#e8803a">${cap} cap</span>`;
+    if (diff > 0) html += ` <span style="color:#e05a22">(+${diff} over)</span>`;
+    else if (diff < 0) html += ` <span style="color:var(--text2)">(${Math.abs(diff)} spare)</span>`;
+    html += `</div>`;
+
+    if (projs.length) {
+      html += `<div style="border-top:1px solid var(--border);padding-top:6px;margin-top:4px">`;
+      projs.forEach(p => {
+        const col = getStatus(p)==='active'?'#4da8c4':getStatus(p)==='upcoming'?'#e07a52':'#2d6f84';
+        html += `<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:3px">
+          <span style="color:${col}">${p.name.length>24?p.name.slice(0,23)+'…':p.name}</span>
+          <span style="color:var(--text2);font-family:monospace">${p.techs}T</span>
+        </div>`;
+      });
+      html += '</div>';
+    } else {
+      html += `<div style="color:var(--text2)">No projects</div>`;
+    }
+
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    const tx = e.clientX + 14, ty = e.clientY - 10;
+    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+    tooltip.style.left = (tx + tw > window.innerWidth - 8 ? e.clientX - tw - 14 : tx) + 'px';
+    tooltip.style.top  = (ty + th > window.innerHeight - 8 ? e.clientY - th - 10 : ty) + 'px';
+  });
+
+  canvas.addEventListener('mouseleave', () => { tooltip.style.display='none'; });
+});
+
+// ─────────────────────────────────────────────
+//  REVENUE
+// ─────────────────────────────────────────────
+function setRevView(v) {
+  revView = v;
+  document.getElementById('rev-monthly-btn').classList.toggle('active', v==='monthly');
+  document.getElementById('rev-ytd-btn').classList.toggle('active', v==='ytd');
+  renderRevenue();
+}
+
+function renderRevenue() {
+  const years = [...new Set(projects.map(p=>new Date(p.start).getFullYear()))].sort((a,b)=>b-a);
+  if (!years.includes(new Date().getFullYear())) years.unshift(new Date().getFullYear());
+  const yearSel = document.getElementById('rev-year');
+  const curYear = parseInt(yearSel.value) || years[0];
+  yearSel.innerHTML = years.map(y=>`<option value="${y}" ${y===curYear?'selected':''}>${y}</option>`).join('');
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function projectMonthly(p) {
+    const start = new Date(p.start), end = new Date(p.end);
+    const totalMs = end - start || 1;
+    const out = {};
+    for (let m=0; m<12; m++) {
+      const mS = new Date(curYear,m,1), mE = new Date(curYear,m+1,0,23,59,59);
+      const oS = Math.max(start,mS), oE = Math.min(end,mE);
+      if (oS <= oE) out[m] = p.price * (oE-oS)/totalMs;
+    }
+    return out;
+  }
+
+  const revM = Array(12).fill(0), marginM = Array(12).fill(0);
+  projects.forEach(p => {
+    Object.entries(projectMonthly(p)).forEach(([m,rev]) => {
+      revM[m] += rev; marginM[m] += rev * p.margin/100;
+    });
+  });
+  const marginPctM = revM.map((r,i) => r ? marginM[i]/r*100 : 0);
+
+  let labels, revData, marginData, marginPctData;
+  const nowM = new Date().getFullYear()===curYear ? new Date().getMonth() : 11;
+  if (revView==='ytd') {
+    labels = months.slice(0,nowM+1);
+    let cr=0, cm=0;
+    revData = revM.slice(0,nowM+1).map(v=>{cr+=v;return Math.round(cr);});
+    marginData = marginM.slice(0,nowM+1).map(v=>{cm+=v;return Math.round(cm);});
+    marginPctData = revData.map((r,i)=>r?+(marginData[i]/r*100).toFixed(1):0);
+    document.getElementById('rev-bar-title').textContent = 'YTD cumulative revenue & margin ($)';
+    document.getElementById('margin-pct-title').textContent = 'YTD margin %';
+  } else {
+    labels = months;
+    revData = revM.map(Math.round);
+    marginData = marginM.map(Math.round);
+    marginPctData = marginPctM.map(v=>+v.toFixed(1));
+    document.getElementById('rev-bar-title').textContent = 'Monthly revenue & margin ($)';
+    document.getElementById('margin-pct-title').textContent = 'Monthly margin %';
+  }
+
+  // Metrics
+  const totalRev = revM.reduce((a,b)=>a+b,0);
+  const totalMargin = marginM.reduce((a,b)=>a+b,0);
+  const avgPct = totalRev ? totalMargin/totalRev*100 : 0;
+  const bestMonth = months[revM.indexOf(Math.max(...revM))];
+  document.getElementById('rev-metrics').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">${curYear} revenue</div>
+      <div class="metric-value metric-accent">${fmtMoney(Math.round(totalRev))}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">${curYear} margin $</div>
+      <div class="metric-value">${fmtMoney(Math.round(totalMargin))}</div>
+      <div class="metric-sub">${avgPct.toFixed(1)}% average</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Peak month</div>
+      <div class="metric-value">${bestMonth}</div>
+      <div class="metric-sub">${fmtMoney(Math.round(Math.max(...revM)))}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Projects (${curYear})</div>
+      <div class="metric-value">${projects.filter(p=>new Date(p.start).getFullYear()===curYear||new Date(p.end).getFullYear()===curYear).length}</div>
+    </div>`;
+
+  // Revenue + margin bar chart
+  if (revChartInst) revChartInst.destroy();
+  revChartInst = new Chart(document.getElementById('rev-chart'), {
+    type:'bar',
+    data:{ labels, datasets:[
+      {label:'Revenue',data:revData,backgroundColor:'rgba(77,168,196,0.75)',borderRadius:4,order:2},
+      {label:'Margin',data:marginData,backgroundColor:'rgba(224,90,34,0.75)',borderRadius:4,order:1}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.raw)}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a2',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a2',font:{size:11},callback:v=>'$'+Math.round(v/1000)+'k'}}
+      }
+    }
+  });
+
+  // Margin % line
+  if (marginChartInst) marginChartInst.destroy();
+  marginChartInst = new Chart(document.getElementById('margin-chart'), {
+    type:'line',
+    data:{labels,datasets:[{label:'Margin %',data:marginPctData,borderColor:'#e05a22',backgroundColor:'rgba(224,90,34,0.1)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#e05a22'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(1)+'%'}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a2',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a2',font:{size:11},callback:v=>v+'%'},min:0,max:100}
+      }
+    }
+  });
+
+  // Revenue + profit by project (grouped horizontal bars)
+  const projRevData = [...projects]
+    .filter(p=>new Date(p.start).getFullYear()===curYear||new Date(p.end).getFullYear()===curYear)
+    .sort((a,b)=>b.price-a.price)
+    .slice(0,8);
+  if (projRevChartInst) projRevChartInst.destroy();
+  const projWrap = document.getElementById('proj-rev-chart').parentElement;
+  projWrap.style.height = Math.max(180, projRevData.length*52+50)+'px';
+  projRevChartInst = new Chart(document.getElementById('proj-rev-chart'), {
+    type:'bar',
+    data:{
+      labels: projRevData.map(p=>p.name.length>22?p.name.slice(0,21)+'…':p.name),
+      datasets:[
+        {
+          label:'Revenue',
+          data: projRevData.map(p=>p.price),
+          backgroundColor:'rgba(77,168,196,0.7)',
+          borderColor:'rgba(77,168,196,0.9)',
+          borderWidth:0,
+          borderRadius:3,
+        },
+        {
+          label:'Profit',
+          data: projRevData.map(p=>Math.round(p.price*p.margin/100)),
+          backgroundColor:'rgba(224,90,34,0.75)',
+          borderColor:'rgba(224,90,34,0.9)',
+          borderWidth:0,
+          borderRadius:3,
+        }
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label: ctx => {
+              const p = projRevData[ctx.dataIndex];
+              if(ctx.datasetIndex===0) return ' Revenue: '+fmtMoney(ctx.raw);
+              return ' Profit: '+fmtMoney(ctx.raw)+' ('+p.margin+'%)';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          grid:{color:'rgba(255,255,255,0.04)'},
+          ticks:{color:'#7fa5b5',font:{size:11},callback:v=>'$'+Math.round(v/1000)+'k'}
+        },
+        y:{
+          grid:{display:false},
+          ticks:{color:'#7fa5b5',font:{size:11}}
+        }
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+//  PDF EXPORT
+// ─────────────────────────────────────────────
+function exportPDF() {
+  // Stamp print dates
+  const now = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  document.querySelectorAll('[id^=print-date]').forEach(el => el.textContent = 'Exported '+now);
+
+  // Re-render gantt for print (light mode)
+  const ganttEl = document.getElementById('section-gantt');
+  ganttEl.classList.add('active');
+  renderGanttForPrint();
+
+  // Show all sections
+  document.querySelectorAll('.section').forEach(s => s.classList.add('active'));
+  document.querySelectorAll('.print-page-header').forEach(h => h.style.display='flex');
+
+  window.print();
+
+  // Restore
+  setTimeout(() => {
+    document.querySelectorAll('.print-page-header').forEach(h => h.style.display='none');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const cur = ['projects','gantt','revenue'].find(n =>
+      document.getElementById('topbar-title').textContent === sectionTitles[n]
+    ) || 'projects';
+    document.getElementById('section-'+cur).classList.add('active');
+    renderGantt();
+  }, 500);
+}
+
+function renderGanttForPrint() {
+  // Temporarily set capacity input if not present
+  const capEl = document.getElementById('team-capacity');
+  const filterEl = document.getElementById('gantt-filter');
+  const origFilter = filterEl ? filterEl.value : 'all';
+  if (filterEl) filterEl.value = 'all';
+  renderGantt(true);
+  if (filterEl) filterEl.value = origFilter;
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+function renderAll() { renderProjects(); renderRevenue(); }
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('section-gantt').classList.contains('active')) renderGantt();
+});
+
+// Boot — load from Supabase
+loadProjects();
+</script>
+</body>
+</html>
