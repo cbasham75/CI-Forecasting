@@ -279,8 +279,28 @@ select option { background: var(--bg3); }
 .section.active { display: block; }
 
 /* GANTT CANVAS */
-#gantt-canvas { display: block; max-width: 100%; border-radius: var(--radius-sm); }
-.gantt-wrap { overflow-x: auto; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+#gantt-canvas { display: block; border-radius: var(--radius-sm); }
+.gantt-scroll-outer {
+  overflow-x: auto;
+  overflow-y: visible;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+  /* smooth momentum scroll on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+.gantt-scroll-outer::-webkit-scrollbar { height: 6px; }
+.gantt-scroll-outer::-webkit-scrollbar-track { background: var(--bg3); border-radius: 3px; }
+.gantt-scroll-outer::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+/* Keep label column frozen while scrolling */
+.gantt-label-overlay {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: none; /* shown by JS after render */
+}
 
 /* ═══════════════════════════════════════════════
    PRINT / PDF STYLES
@@ -375,6 +395,10 @@ select option { background: var(--bg3); }
       <img src="data:image/webp;base64,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" alt="Cabling Innovations LLC" style="width:100%;max-width:180px;height:auto;display:block">
     </div>
     <nav class="sidebar-nav">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <button class="btn btn-primary" style="width:100%;justify-content:center;font-weight:600" onclick="openModal()">+ Add project</button>
+        <button class="btn btn-success" style="width:100%;justify-content:center;font-weight:600" onclick="exportPDF()">↓ Export PDF</button>
+      </div>
       <button class="nav-item active" onclick="showSection('projects')">
         <span class="icon">◧</span> Projects
       </button>
@@ -386,9 +410,11 @@ select option { background: var(--bg3); }
       </button>
     </nav>
     <div class="sidebar-bottom">
-      <button class="btn btn-success" style="width:100%;justify-content:center;font-weight:600" onclick="exportPDF()">
-        ↓ Export PDF
-      </button>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="downloadTemplate()">↓ CSV template</button>
+        <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="document.getElementById('csv-file-input').click()">↑ Import CSV</button>
+        <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVUpload(event)">
+      </div>
     </div>
   </aside>
 
@@ -396,9 +422,11 @@ select option { background: var(--bg3); }
   <div class="main">
     <div class="topbar">
       <span class="topbar-title" id="topbar-title">Projects</span>
-      <div class="topbar-actions">
-        <button class="btn no-print" onclick="exportPDF()">↓ Export PDF</button>
-        <button class="btn btn-primary no-print" onclick="openModal()">+ Add project</button>
+      <div class="topbar-actions no-print">
+        <button class="btn" onclick="downloadTemplate()">↓ CSV template</button>
+        <button class="btn" onclick="document.getElementById('csv-file-input').click()">↑ Import CSV</button>
+        <button class="btn" onclick="exportPDF()">↓ Export PDF</button>
+        <button class="btn btn-primary" onclick="openModal()">+ Add project</button>
       </div>
     </div>
     <div id="status-bar" style="display:none;padding:7px 28px;font-size:12px;font-weight:500;transition:all .3s"></div>
@@ -475,10 +503,10 @@ select option { background: var(--bg3); }
         </div>
 
         <div class="gantt-note">
-          <span>←</span> Timeline: right = earliest, left = latest &nbsp;|&nbsp;
+          Timeline flows left (past) → right (future) &nbsp;|&nbsp;
           <span style="color:#e05a22">━━</span> Today &nbsp;|&nbsp;
           <span style="color:#e05a22">▓</span> Over capacity &nbsp;|&nbsp;
-          <span style="color:#e05a22">━━</span> Capacity line
+          <span style="color:#e05a22">━ ━</span> Capacity line &nbsp;|&nbsp; Scroll horizontally to navigate
         </div>
 
         <div class="gantt-legend" style="margin-bottom:12px">
@@ -490,8 +518,8 @@ select option { background: var(--bg3); }
         <!-- Tooltip for hover -->
         <div id="gantt-tooltip" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4);min-width:180px"></div>
 
-        <div class="gantt-wrap" style="padding:0;overflow:hidden">
-          <canvas id="gantt-canvas" style="cursor:crosshair"></canvas>
+        <div class="gantt-scroll-outer" id="gantt-scroll-outer">
+          <canvas id="gantt-canvas" style="cursor:crosshair;display:block"></canvas>
         </div>
       </div>
 
@@ -541,8 +569,31 @@ select option { background: var(--bg3); }
   </div><!-- /main -->
 </div><!-- /shell -->
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modal">
+<!-- CSV IMPORT MODAL -->
+<div class="modal-overlay" id="csv-modal">
+  <div class="modal" style="width:min(720px,97vw)">
+    <div class="modal-head">
+      <span class="modal-title">Import CSV — preview</span>
+      <button class="modal-close" onclick="closeCSVModal()">✕</button>
+    </div>
+    <div id="csv-preview-info" style="font-size:12px;color:var(--text2);margin-bottom:14px"></div>
+    <div id="csv-errors" style="display:none;background:rgba(224,90,34,0.1);border:1px solid rgba(224,90,34,0.25);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#e05a22;margin-bottom:14px"></div>
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm);max-height:320px;overflow-y:auto">
+      <table id="csv-preview-table" style="min-width:600px">
+        <thead>
+          <tr>
+            <th>Project name</th><th>Start</th><th>End</th><th>Hours</th><th>Techs</th><th>Price</th><th>Margin %</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="csv-preview-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeCSVModal()">Cancel</button>
+      <button class="btn btn-primary" id="csv-import-btn" onclick="confirmCSVImport()">Import all valid rows</button>
+    </div>
+  </div>
+</div>
   <div class="modal">
     <div class="modal-head">
       <span class="modal-title" id="modal-title">Add project</span>
@@ -694,13 +745,18 @@ function fmtMoney(v, short=false) {
 // ─────────────────────────────────────────────
 const sectionTitles = { projects:'Projects', gantt:'Gantt Chart', revenue:'Revenue & Margin' };
 
+let ganttNeedsRefresh = false;
+
 function showSection(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('section-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.nav-item')[['projects','gantt','revenue'].indexOf(name)].classList.add('active');
   document.getElementById('topbar-title').textContent = sectionTitles[name];
-  if (name==='gantt') setTimeout(renderGantt, 50);
+  if (name==='gantt') {
+    setTimeout(renderGantt, 50);
+    ganttNeedsRefresh = false;
+  }
   if (name==='revenue') renderRevenue();
 }
 
@@ -903,32 +959,47 @@ function renderGantt(isPrint = false) {
   const CAPACITY = Math.max(1, parseInt(capacityEl ? capacityEl.value : 10) || 10);
 
   const dpr = isPrint ? 1 : Math.min(window.devicePixelRatio||1, 2);
-  const container = canvas.parentElement;
-  const W = isPrint ? 960 : Math.max(container.clientWidth, 600);
 
-  // Layout constants
-  const LABEL_W = 195;
-  const TICK_W  = W - LABEL_W - 16;
-  const ROW     = 52;
-  const GANTT_PAD_TOP = 44;
-  const GANTT_H = GANTT_PAD_TOP + data.length * ROW;
-  const DIVIDER = 18;
-  const LOAD_H  = 140;   // height of load panel
+  // ── Date range: 1 month back from today, 2 months past furthest end date ──
+  const today = new Date();
+  const rangeStart = new Date(today);
+  rangeStart.setMonth(rangeStart.getMonth() - 1);
+  rangeStart.setDate(1); // snap to start of that month
+
+  const allEndDates = data.map(p => new Date(p.end));
+  const furthestEnd = new Date(Math.max(...allEndDates));
+  const rangeEnd = new Date(furthestEnd);
+  rangeEnd.setMonth(rangeEnd.getMonth() + 2);
+  rangeEnd.setDate(getLastDayOfMonth(rangeEnd));
+
+  function getLastDayOfMonth(d) {
+    return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  }
+
+  const minD = rangeStart;
+  const maxD = rangeEnd;
+  const totalDays = Math.ceil((maxD - minD) / 864e5) + 1;
+
+  // ── Layout ──
+  const LABEL_W    = 195;
+  const PX_PER_DAY = isPrint ? 4 : 18;  // 18px per day gives good weekly resolution
+  const TICK_W     = totalDays * PX_PER_DAY;
+  const W          = LABEL_W + TICK_W + 20;
+  const ROW        = 52;
+  const GANTT_PAD_TOP = 56;  // extra room for two header rows
+  const GANTT_H    = GANTT_PAD_TOP + data.length * ROW;
+  const DIVIDER    = 18;
+  const LOAD_H     = 140;
   const LOAD_PAD_TOP = 28;
   const LOAD_PAD_BTM = 28;
-  const TOTAL_H = GANTT_H + DIVIDER + LOAD_H;
-
-  // Date range
-  const allDates = data.flatMap(p=>[new Date(p.start),new Date(p.end)]);
-  const minD = new Date(Math.min(...allDates)); minD.setDate(minD.getDate()-5);
-  const maxD = new Date(Math.max(...allDates)); maxD.setDate(maxD.getDate()+5);
+  const TOTAL_H    = GANTT_H + DIVIDER + LOAD_H;
 
   // Build tech load
   const { load, projects_on_day, days } = buildDailyTechLoad(data, minD, maxD);
   const maxLoad = Math.max(CAPACITY, ...load);
   const overloadDays = load.filter(l => l > CAPACITY).length;
 
-  // Update overload badge
+  // Overload badge
   const badge = document.getElementById('overload-badge');
   if (badge) {
     if (overloadDays > 0) {
@@ -947,182 +1018,222 @@ function renderGantt(isPrint = false) {
   ctx.scale(dpr, dpr);
 
   // Colors
-  const bg    = isPrint ? '#ffffff' : '#1d2436';
-  const bgAlt = isPrint ? '#f5f7fc' : '#212b3d';
-  const bgLoad= isPrint ? '#f9fafb' : '#181f2e';
-  const textC = isPrint ? '#111'    : '#e8eaf0';
-  const muted = isPrint ? '#777'    : '#8a90a2';
-  const gridC = isPrint ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.035)';
+  const bg    = isPrint ? '#ffffff' : '#1a2c3a';
+  const bgAlt = isPrint ? '#f5f7fc' : '#1f3344';
+  const bgLoad= isPrint ? '#f9fafb' : '#152432';
+  const textC = isPrint ? '#111'    : '#edf1f3';
+  const muted = isPrint ? '#777'    : '#7fa5b5';
+  const gridW = isPrint ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)';
+  const gridM = isPrint ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.09)'; // stronger for month lines
   const barCol= {
     active:   isPrint ? '#1a5f72' : '#4da8c4',
     upcoming: isPrint ? '#a03d18' : '#e07a52',
     done:     isPrint ? '#4a7a88' : '#2d6f84'
   };
   const overC = isPrint ? '#c0392b' : '#e05a22';
-  const safeC = isPrint ? '#1a5f72' : '#4da8c4';
   const capC  = '#e05a22';
 
-  // ── Background ──
+  // ── x helpers: left=earliest(minD), right=latest(maxD) — LEFT TO RIGHT ──
+  function xForDate(d) {
+    const frac = (new Date(d) - minD) / (maxD - minD);
+    return LABEL_W + frac * TICK_W;
+  }
+  function xForDayIndex(i) {
+    return LABEL_W + (i / (totalDays - 1)) * TICK_W;
+  }
+
+  // ── Full background ──
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, GANTT_H);
   ctx.fillStyle = bgLoad;
   ctx.fillRect(0, GANTT_H + DIVIDER, W, LOAD_H);
 
-  // ── Shared x helper: right=earliest, left=latest ──
-  function xForDate(d) {
-    const frac = (new Date(d) - minD) / (maxD - minD);
-    return LABEL_W + (1 - frac) * TICK_W;
-  }
-  function xForDayIndex(i) {
-    const frac = i / (days - 1);
-    return LABEL_W + (1 - frac) * TICK_W;
-  }
-
-  // ── Month grid lines (shared for both panels) ──
-  const tick = new Date(minD); tick.setDate(1);
-  while (tick <= maxD) {
-    const x = xForDate(tick);
-    if (x >= LABEL_W && x <= W - 4) {
-      ctx.strokeStyle = gridC;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(x, GANTT_PAD_TOP); ctx.lineTo(x, TOTAL_H - LOAD_PAD_BTM); ctx.stroke();
-      // month label in gantt header
-      ctx.fillStyle = muted;
-      ctx.font = '500 10px DM Sans, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(tick.toLocaleDateString('en-US',{month:'short',year:'2-digit'}), x, 16);
-    }
-    tick.setMonth(tick.getMonth()+1);
-  }
-
-  // ── Direction labels ──
-  ctx.font = '10px DM Sans, sans-serif'; ctx.fillStyle = muted;
-  ctx.textAlign = 'left';  ctx.fillText('Earlier →', LABEL_W+6, 30);
-  ctx.textAlign = 'right'; ctx.fillText('← Later', W-4, 30);
-
-  // ── Alternating gantt rows ──
+  // ── Alternating row stripes ──
   data.forEach((p, i) => {
-    if (i%2===0) {
+    if (i % 2 === 0) {
       ctx.fillStyle = bgAlt;
-      ctx.fillRect(0, GANTT_PAD_TOP + i*ROW, W, ROW);
+      ctx.fillRect(LABEL_W, GANTT_PAD_TOP + i * ROW, TICK_W + 20, ROW);
     }
   });
 
-  // ── Today line ──
-  const todayX = xForDate(new Date());
-  ctx.save();
-  ctx.strokeStyle = overC; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
-  ctx.beginPath(); ctx.moveTo(todayX, GANTT_PAD_TOP - 4); ctx.lineTo(todayX, TOTAL_H - LOAD_PAD_BTM); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
-  ctx.font = '500 10px DM Sans, sans-serif'; ctx.fillStyle = overC; ctx.textAlign = 'center';
-  ctx.fillText('Today', todayX, GANTT_PAD_TOP - 6);
+  // ── Weekly tick marks + month headers ──
+  // Find first Sunday on or after minD for weekly alignment
+  const firstSunday = new Date(minD);
+  while (firstSunday.getDay() !== 0) firstSunday.setDate(firstSunday.getDate() + 1);
 
-  // ── Project bars ──
+  // Week lines
+  const wk = new Date(firstSunday);
+  while (wk <= maxD) {
+    const x = xForDate(wk);
+    if (x >= LABEL_W) {
+      ctx.strokeStyle = gridW;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x, GANTT_PAD_TOP); ctx.lineTo(x, TOTAL_H - LOAD_PAD_BTM); ctx.stroke();
+
+      // Week date label on second header row
+      ctx.fillStyle = muted;
+      ctx.font = '9px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(wk.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}), x, GANTT_PAD_TOP - 8);
+    }
+    wk.setDate(wk.getDate() + 7);
+  }
+
+  // Month lines + labels (on top row, stronger)
+  const mth = new Date(minD); mth.setDate(1);
+  while (mth <= maxD) {
+    const x = xForDate(mth);
+    if (x >= LABEL_W) {
+      ctx.strokeStyle = gridM;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, TOTAL_H - LOAD_PAD_BTM); ctx.stroke();
+
+      // Month name on top row
+      ctx.fillStyle = textC;
+      ctx.font = '500 11px DM Sans, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(mth.toLocaleDateString('en-US',{month:'short',year:'numeric'}), x + 4, 14);
+    }
+    mth.setMonth(mth.getMonth() + 1);
+  }
+
+  // Header row divider
+  ctx.strokeStyle = isPrint ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(LABEL_W, GANTT_PAD_TOP - 2); ctx.lineTo(W, GANTT_PAD_TOP - 2); ctx.stroke();
+
+  // ── Today line ──
+  const todayX = xForDate(today);
+  if (todayX >= LABEL_W && todayX <= W) {
+    ctx.strokeStyle = overC; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(todayX, 0); ctx.lineTo(todayX, TOTAL_H - LOAD_PAD_BTM); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '500 10px DM Sans, sans-serif'; ctx.fillStyle = overC; ctx.textAlign = 'center';
+    ctx.fillText('Today', todayX, GANTT_PAD_TOP - 20);
+  }
+
+  // ── Sticky label column background (redrawn over grid lines) ──
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, LABEL_W, GANTT_H);
+  // label column row stripes
   data.forEach((p, i) => {
-    const y = GANTT_PAD_TOP + i * ROW;
-    const xRight = xForDate(p.start);
-    const xLeft  = xForDate(p.end);
-    const barW   = Math.max(xRight - xLeft, 6);
-    const barH   = ROW - 14;
-    const barY   = y + 7;
-    const col    = barCol[getStatus(p)];
+    if (i % 2 === 0) {
+      ctx.fillStyle = bgAlt;
+      ctx.fillRect(0, GANTT_PAD_TOP + i * ROW, LABEL_W, ROW);
+    }
+  });
+  // label column right border
+  ctx.strokeStyle = isPrint ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(LABEL_W, 0); ctx.lineTo(LABEL_W, GANTT_H); ctx.stroke();
+
+  // ── Project bars (left=start, right=end — left-to-right) ──
+  data.forEach((p, i) => {
+    const y     = GANTT_PAD_TOP + i * ROW;
+    const xL    = xForDate(p.start);
+    const xR    = xForDate(p.end);
+    const barW  = Math.max(xR - xL, 6);
+    const barH  = ROW - 14;
+    const barY  = y + 7;
+    const col   = barCol[getStatus(p)];
 
     if (!isPrint) { ctx.shadowColor = col; ctx.shadowBlur = 6; }
     ctx.fillStyle = col;
-    ctx.beginPath(); ctx.roundRect(xLeft, barY, barW, barH, 4); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(xL, barY, barW, barH, 4); ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Techs badge inside bar
+    // Techs badge
     if (barW > 38) {
       ctx.fillStyle = isPrint ? '#fff' : 'rgba(0,0,0,0.7)';
       ctx.font = '500 11px DM Mono, monospace'; ctx.textAlign = 'center';
-      ctx.fillText(p.techs+'T', xLeft + barW/2, barY + barH/2 + 4);
+      ctx.fillText(p.techs + 'T', xL + barW / 2, barY + barH / 2 + 4);
     }
-    // Project name
+
+    // Project name in label column
     ctx.fillStyle = textC; ctx.font = '500 12px DM Sans, sans-serif'; ctx.textAlign = 'right';
-    const nm = p.name.length>26 ? p.name.slice(0,25)+'…' : p.name;
-    ctx.fillText(nm, LABEL_W-10, y + ROW/2 + 4);
-    // Price
+    const nm = p.name.length > 24 ? p.name.slice(0, 23) + '…' : p.name;
+    ctx.fillText(nm, LABEL_W - 10, y + ROW / 2 + 4);
+
+    // Price after bar
     ctx.fillStyle = muted; ctx.font = '10px DM Mono, monospace'; ctx.textAlign = 'left';
-    if (xLeft + barW + 5 + 40 < W)
-      ctx.fillText(fmtMoney(p.price,true), xLeft+barW+5, barY+barH/2+3);
+    if (xR + 5 + 36 < W)
+      ctx.fillText(fmtMoney(p.price, true), xR + 5, barY + barH / 2 + 3);
   });
 
   // ── Divider ──
-  const divY = GANTT_H + DIVIDER/2;
+  const divY = GANTT_H + DIVIDER / 2;
   ctx.strokeStyle = isPrint ? '#ccc' : 'rgba(255,255,255,0.08)';
   ctx.lineWidth = 0.5;
   ctx.beginPath(); ctx.moveTo(0, divY); ctx.lineTo(W, divY); ctx.stroke();
   ctx.fillStyle = muted; ctx.font = '500 10px DM Sans, sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('TECH LOAD / DAY', LABEL_W, divY + 5);
+  ctx.fillText('TECH LOAD / DAY', LABEL_W + 4, divY + 5);
 
   // ── Load panel ──
-  const loadTop  = GANTT_H + DIVIDER + LOAD_PAD_TOP;
-  const loadBot  = GANTT_H + DIVIDER + LOAD_H - LOAD_PAD_BTM;
-  const loadH    = loadBot - loadTop;
-
-  // Y-axis for load
+  const loadTop = GANTT_H + DIVIDER + LOAD_PAD_TOP;
+  const loadBot = GANTT_H + DIVIDER + LOAD_H - LOAD_PAD_BTM;
+  const loadH   = loadBot - loadTop;
   function yForLoad(v) { return loadBot - (v / maxLoad) * loadH; }
 
-  // Draw load bars per day
-  const dayW = TICK_W / days;
-  for (let d = 0; d < days; d++) {
+  const dayW = TICK_W / totalDays;
+  for (let d = 0; d < totalDays; d++) {
     const techCount = load[d];
     if (techCount === 0) continue;
     const x = xForDayIndex(d);
     const isOver = techCount > CAPACITY;
-    const barTop = yForLoad(techCount);
+    const barTop  = yForLoad(techCount);
     const safeTop = yForLoad(Math.min(techCount, CAPACITY));
 
-    // Safe portion
     ctx.fillStyle = isPrint ? 'rgba(26,95,114,0.5)' : 'rgba(77,168,196,0.35)';
     const safeH = loadBot - safeTop;
-    if (safeH > 0) ctx.fillRect(x - dayW/2, safeTop, dayW - 0.5, safeH);
+    if (safeH > 0) ctx.fillRect(x, safeTop, dayW - 0.5, safeH);
 
-    // Over capacity portion
     if (isOver) {
       ctx.fillStyle = isPrint ? 'rgba(192,57,43,0.5)' : 'rgba(224,90,34,0.55)';
       const overH = safeTop - barTop;
-      if (overH > 0) ctx.fillRect(x - dayW/2, barTop, dayW - 0.5, overH);
+      if (overH > 0) ctx.fillRect(x, barTop, dayW - 0.5, overH);
     }
   }
 
   // Capacity line
   const capY = yForLoad(CAPACITY);
-  ctx.strokeStyle = capC; ctx.lineWidth = 1.5; ctx.setLineDash([5,3]);
+  ctx.strokeStyle = capC; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
   ctx.beginPath(); ctx.moveTo(LABEL_W, capY); ctx.lineTo(W - 4, capY); ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle = capC; ctx.font = '500 10px DM Sans, sans-serif'; ctx.textAlign = 'right';
-  ctx.fillText(CAPACITY+' cap', LABEL_W - 4, capY + 4);
+  ctx.fillText(CAPACITY + ' cap', LABEL_W - 4, capY + 4);
 
-  // Y-axis labels (load panel)
-  const yLabels = [0, Math.round(maxLoad/2), maxLoad];
-  yLabels.forEach(v => {
+  // Y-axis labels
+  [0, Math.round(maxLoad / 2), maxLoad].forEach(v => {
     const y = yForLoad(v);
     ctx.fillStyle = muted; ctx.font = '10px DM Mono, monospace'; ctx.textAlign = 'right';
     ctx.fillText(v, LABEL_W - 6, y + 3);
-    ctx.strokeStyle = gridC; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(LABEL_W, y); ctx.lineTo(W-4, y); ctx.stroke();
+    ctx.strokeStyle = gridW; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(LABEL_W, y); ctx.lineTo(W - 4, y); ctx.stroke();
   });
 
-  // Load panel label
-  ctx.fillStyle = muted; ctx.font = '10px DM Sans, sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('techs', 4, loadTop + 12);
-
-  // Over-capacity annotation
+  // Peak annotation
   const peakLoad = Math.max(...load);
   const peakDay  = load.indexOf(peakLoad);
   if (peakLoad > CAPACITY) {
     const px = xForDayIndex(peakDay);
     const py = yForLoad(peakLoad) - 6;
     ctx.fillStyle = overC; ctx.font = '500 11px DM Mono, monospace'; ctx.textAlign = 'center';
-    ctx.fillText('▲'+peakLoad, px, py);
+    ctx.fillText('▲' + peakLoad, px, py);
   }
 
   // Store layout for mouse events
-  ganttLayout = { LABEL_W, TICK_W, minD, maxD, days, GANTT_H, DIVIDER, LOAD_H,
-    loadTop, loadBot, loadH, maxLoad, CAPACITY, data, load, projects_on_day, xForDate, yForLoad, xForDayIndex };
+  ganttLayout = {
+    LABEL_W, TICK_W, minD, maxD, totalDays, GANTT_H, DIVIDER, LOAD_H,
+    loadTop, loadBot, loadH, maxLoad, CAPACITY, data, load, projects_on_day,
+    xForDate, yForLoad, xForDayIndex, ROW, GANTT_PAD_TOP, PX_PER_DAY
+  };
+
+  // Scroll to today on first render
+  const outer = document.getElementById('gantt-scroll-outer');
+  if (outer && !isPrint) {
+    const todayPx = todayX - outer.clientWidth / 2;
+    setTimeout(() => { outer.scrollLeft = Math.max(0, todayPx); }, 50);
+  }
 }
 
 // ── Gantt mouse tooltip ──
@@ -1136,29 +1247,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    const { LABEL_W, TICK_W, minD, maxD, days, GANTT_H, DIVIDER, LOAD_H,
-            data, load, projects_on_day, xForDate, ROW, GANTT_PAD_TOP, CAPACITY } = ganttLayout;
-    const _ROW = 52, _PAD = 44;
+    const { LABEL_W, TICK_W, minD, maxD, totalDays,
+            data, load, projects_on_day, CAPACITY } = ganttLayout;
 
     if (mx < LABEL_W) { tooltip.style.display='none'; return; }
 
-    // Which day index is cursor at?
-    const frac = 1 - (mx - LABEL_W) / TICK_W;
-    const dayIdx = Math.round(frac * (days - 1));
-    if (dayIdx < 0 || dayIdx >= days) { tooltip.style.display='none'; return; }
+    // LTR: left=minD, right=maxD
+    const frac = (mx - LABEL_W) / TICK_W;
+    const dayIdx = Math.round(frac * (totalDays - 1));
+    if (dayIdx < 0 || dayIdx >= totalDays) { tooltip.style.display='none'; return; }
 
     const dayDate = new Date(minD.getTime() + dayIdx * 864e5);
-    const techCount = load[dayIdx];
-    const projs = projects_on_day[dayIdx];
-    const cap = ganttLayout.CAPACITY;
+    const techCount = load[dayIdx] || 0;
+    const projs = projects_on_day[dayIdx] || [];
+    const cap = CAPACITY;
     const diff = techCount - cap;
 
-    let html = `<div style="font-weight:600;margin-bottom:6px;color:var(--text)">${dayDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>`;
+    let html = `<div style="font-weight:600;margin-bottom:6px;color:var(--text)">${dayDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</div>`;
     html += `<div style="margin-bottom:6px;font-size:13px">`;
     html += `<span style="color:${diff>0?'#e05a22':'#4da8c4'};font-weight:600">${techCount} tech${techCount!==1?'s':''}</span>`;
     html += ` / <span style="color:#e8803a">${cap} cap</span>`;
     if (diff > 0) html += ` <span style="color:#e05a22">(+${diff} over)</span>`;
     else if (diff < 0) html += ` <span style="color:var(--text2)">(${Math.abs(diff)} spare)</span>`;
+    else if (techCount > 0) html += ` <span style="color:#4da8c4">(at capacity)</span>`;
     html += `</div>`;
 
     if (projs.length) {
@@ -1172,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       html += '</div>';
     } else {
-      html += `<div style="color:var(--text2)">No projects</div>`;
+      html += `<div style="color:var(--text2)">No projects scheduled</div>`;
     }
 
     tooltip.innerHTML = html;
@@ -1404,9 +1515,221 @@ function renderGanttForPrint() {
 }
 
 // ─────────────────────────────────────────────
-//  INIT
+//  CSV TEMPLATE DOWNLOAD
 // ─────────────────────────────────────────────
-function renderAll() { renderProjects(); renderRevenue(); }
+function downloadTemplate() {
+  const headers = 'project_name,start_date,end_date,total_tech_hours,num_techs,total_price,margin_percent';
+  const example1 = 'Commercial HVAC – Building A,2025-06-02,2025-06-20,160,2,28500,38';
+  const example2 = 'Fiber Run – Data Center,2025-06-10,2025-07-01,240,3,52000,41';
+  const example3 = 'Controls Upgrade – Warehouse,2025-07-07,2025-07-25,120,2,19800,35';
+  const notes = [
+    '# ─────────────────────────────────────────────────────────────',
+    '# CABLING INNOVATIONS – Project Import Template',
+    '# ─────────────────────────────────────────────────────────────',
+    '# Instructions:',
+    '#   • Delete these comment lines (starting with #) before importing',
+    '#   • Keep the header row exactly as-is',
+    '#   • Dates must be in YYYY-MM-DD format (e.g. 2025-06-15)',
+    '#   • total_tech_hours = total hours of work (all techs combined)',
+    '#   • num_techs = how many techs assigned to the project',
+    '#   • total_price = full project dollar amount (no $ sign)',
+    '#   • margin_percent = profit margin as a number (e.g. 38 for 38%)',
+    '#   • Leave end_date blank to auto-calculate from hours & techs',
+    '# ─────────────────────────────────────────────────────────────',
+  ].join('\n');
+  const csv = notes + '\n' + headers + '\n' + example1 + '\n' + example2 + '\n' + example3;
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cabling-innovations-project-template.csv';
+  a.click();
+}
+
+// ─────────────────────────────────────────────
+//  CSV IMPORT
+// ─────────────────────────────────────────────
+let csvParsedRows = [];
+
+function handleCSVUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = ''; // reset so same file can be re-imported
+  const reader = new FileReader();
+  reader.onload = (e) => parseAndPreviewCSV(e.target.result);
+  reader.readAsText(file);
+}
+
+function parseAndPreviewCSV(text) {
+  // Strip comment lines
+  const lines = text.split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('#'));
+
+  if (lines.length < 2) {
+    showStatus('CSV appears empty or has no data rows.', true);
+    return;
+  }
+
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'));
+  const dataLines = lines.slice(1);
+
+  // Flexible column mapping
+  const col = {
+    name:   findCol(headers, ['project_name','name','project','job_name','job']),
+    start:  findCol(headers, ['start_date','start','begin','begin_date']),
+    end:    findCol(headers, ['end_date','end','finish','finish_date']),
+    hours:  findCol(headers, ['total_tech_hours','hours','tech_hours','total_hours']),
+    techs:  findCol(headers, ['num_techs','techs','technicians','num_technicians','number_of_techs']),
+    price:  findCol(headers, ['total_price','price','amount','contract_value','value']),
+    margin: findCol(headers, ['margin_percent','margin','margin_pct','profit_margin']),
+  };
+
+  const missing = Object.entries(col).filter(([k,v]) => v === -1 && k !== 'end').map(([k]) => k);
+  if (missing.length) {
+    showStatus('CSV missing required columns: ' + missing.join(', '), true);
+    return;
+  }
+
+  csvParsedRows = [];
+  const errors = [];
+
+  dataLines.forEach((line, idx) => {
+    if (!line.trim()) return;
+    const cells = parseCSVLine(line);
+    const rowNum = idx + 2;
+
+    const name   = cells[col.name]?.trim();
+    const start  = cells[col.start]?.trim();
+    const hours  = parseFloat(cells[col.hours]);
+    const techs  = parseInt(cells[col.techs]);
+    const price  = parseFloat(cells[col.price]?.replace(/[$,]/g,''));
+    const margin = parseFloat(cells[col.margin]);
+
+    // Auto-calculate end date if blank
+    let end = col.end !== -1 ? cells[col.end]?.trim() : '';
+    if (!end && start && !isNaN(hours) && !isNaN(techs) && techs > 0) {
+      const techDays = Math.ceil(hours / (techs * 8));
+      end = addWeekdays(start, techDays - 1).toISOString().split('T')[0];
+    }
+
+    const rowErrors = [];
+    if (!name) rowErrors.push('missing project name');
+    if (!isValidDate(start)) rowErrors.push('invalid start date (use YYYY-MM-DD)');
+    if (!isValidDate(end)) rowErrors.push('invalid or missing end date');
+    if (isNaN(hours) || hours <= 0) rowErrors.push('invalid hours');
+    if (isNaN(techs) || techs <= 0) rowErrors.push('invalid techs');
+    if (isNaN(price) || price < 0) rowErrors.push('invalid price');
+    if (isNaN(margin) || margin < 0 || margin > 100) rowErrors.push('invalid margin (0-100)');
+    if (isValidDate(start) && isValidDate(end) && new Date(end) <= new Date(start)) rowErrors.push('end date must be after start date');
+
+    if (rowErrors.length) {
+      errors.push(`Row ${rowNum} (${name||'unnamed'}): ${rowErrors.join(', ')}`);
+      csvParsedRows.push({ valid: false, name, start, end, hours, techs, price, margin, errors: rowErrors });
+    } else {
+      csvParsedRows.push({ valid: true, name, start, end, hours, techs, price, margin });
+    }
+  });
+
+  // Show preview modal
+  const tbody = document.getElementById('csv-preview-tbody');
+  const validCount = csvParsedRows.filter(r => r.valid).length;
+  const invalidCount = csvParsedRows.length - validCount;
+
+  document.getElementById('csv-preview-info').innerHTML =
+    `<strong>${csvParsedRows.length}</strong> rows found — ` +
+    `<span style="color:#4da8c4">${validCount} valid</span>` +
+    (invalidCount ? `, <span style="color:#e05a22">${invalidCount} with errors (will be skipped)</span>` : '');
+
+  const errBox = document.getElementById('csv-errors');
+  if (errors.length) {
+    errBox.style.display = 'block';
+    errBox.innerHTML = '<strong>Errors (these rows will be skipped):</strong><br>' + errors.join('<br>');
+  } else {
+    errBox.style.display = 'none';
+  }
+
+  tbody.innerHTML = csvParsedRows.map(r => {
+    const bg = r.valid ? '' : 'background:rgba(224,90,34,0.08)';
+    const icon = r.valid ? '<span style="color:#4da8c4">✓</span>' : '<span style="color:#e05a22">✕</span>';
+    return `<tr style="${bg}">
+      <td style="max-width:180px;white-space:normal;line-height:1.3">${r.name||'—'}</td>
+      <td class="mono">${r.start||'—'}</td>
+      <td class="mono">${r.end||'—'}</td>
+      <td>${isNaN(r.hours)?'—':r.hours+'h'}</td>
+      <td>${isNaN(r.techs)?'—':r.techs}</td>
+      <td class="mono">${isNaN(r.price)?'—':fmtMoney(r.price)}</td>
+      <td>${isNaN(r.margin)?'—':r.margin+'%'}</td>
+      <td>${icon}${r.valid?'':'<span style="font-size:10px;color:#e05a22;margin-left:4px">'+r.errors.join(', ')+'</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('csv-import-btn').textContent = `Import ${validCount} valid row${validCount!==1?'s':''}`;
+  document.getElementById('csv-import-btn').disabled = validCount === 0;
+  document.getElementById('csv-modal').classList.add('open');
+}
+
+async function confirmCSVImport() {
+  const validRows = csvParsedRows.filter(r => r.valid);
+  if (!validRows.length) return;
+  closeCSVModal();
+  showStatus(`Importing ${validRows.length} projects…`);
+  let successCount = 0;
+  for (const r of validRows) {
+    try {
+      const row = await dbInsert({ name:r.name, start:r.start, end:r.end, hours:r.hours, techs:r.techs, price:r.price, margin:r.margin });
+      projects.push({ id: row.id, name:r.name, start:r.start, end:r.end, hours:r.hours, techs:r.techs, price:r.price, margin:r.margin });
+      successCount++;
+    } catch(e) {
+      console.error('Failed to import row:', r.name, e);
+    }
+  }
+  showStatus(`✓ Imported ${successCount} of ${validRows.length} projects`);
+  renderAll();
+}
+
+function closeCSVModal() {
+  document.getElementById('csv-modal').classList.remove('open');
+  csvParsedRows = [];
+}
+
+// ── CSV helpers ──
+function findCol(headers, candidates) {
+  for (const c of candidates) {
+    const i = headers.indexOf(c);
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+
+function isValidDate(s) {
+  if (!s) return false;
+  const d = new Date(s);
+  return !isNaN(d.getTime()) && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+function parseCSVLine(line) {
+  // Handles quoted fields with commas inside
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === ',' && !inQuotes) { result.push(cur); cur = ''; }
+    else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+function renderAll() {
+  renderProjects();
+  renderRevenue();
+  // Re-render gantt if visible, otherwise flag it as stale so it refreshes on next switch
+  if (document.getElementById('section-gantt').classList.contains('active')) {
+    setTimeout(renderGantt, 50);
+  } else {
+    ganttNeedsRefresh = true;
+  }
+}
 
 window.addEventListener('resize', () => {
   if (document.getElementById('section-gantt').classList.contains('active')) renderGantt();
