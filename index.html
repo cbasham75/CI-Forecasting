@@ -270,6 +270,38 @@ select option { background: var(--bg3); }
 .rev-tab { padding: 5px 14px; border-radius: 4px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text2); background: none; border: none; font-family: inherit; transition: all .15s; }
 .rev-tab.active { background: var(--bg4); color: var(--text); }
 
+/* BREAK ROWS */
+.break-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+.break-row .form-group { margin: 0; }
+.break-remove {
+  background: none; border: none; color: var(--text3); cursor: pointer;
+  font-size: 16px; padding: 4px 6px; border-radius: 4px; line-height:1;
+  align-self: flex-end; margin-bottom: 2px;
+}
+.break-remove:hover { color: var(--accent4); background: rgba(224,90,34,0.1); }
+#breaks-container { margin-top: 4px; }
+.add-break-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px dashed var(--border2); background: transparent;
+  color: var(--text2); font-family: inherit; transition: all .15s;
+  margin-top: 8px;
+}
+.add-break-btn:hover { border-color: var(--ci-teal-light); color: var(--ci-teal-light); background: rgba(77,168,196,0.06); }
+
 /* FILTER BAR */
 .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
 .filter-bar select { padding: 7px 10px; font-size: 12px; min-width: 140px; }
@@ -608,10 +640,6 @@ select option { background: var(--bg3); }
         <input id="f-name" type="text" placeholder="e.g. HVAC Retrofit – Warehouse A">
       </div>
       <div class="form-group">
-        <label class="form-label">Start date</label>
-        <input id="f-start" type="date" oninput="calcEndDate()" onchange="calcEndDate()">
-      </div>
-      <div class="form-group">
         <label class="form-label">Total tech hours</label>
         <input id="f-hours" type="number" placeholder="e.g. 160" min="1" oninput="calcEndDate()" onchange="calcEndDate()">
       </div>
@@ -619,12 +647,24 @@ select option { background: var(--bg3); }
         <label class="form-label">Number of techs</label>
         <input id="f-techs" type="number" placeholder="e.g. 2" min="1" oninput="calcEndDate()" onchange="calcEndDate()">
       </div>
-      <div class="form-group form-full">
+      <div class="form-group">
+        <label class="form-label">Start date</label>
+        <input id="f-start" type="date" oninput="calcEndDate()" onchange="calcEndDate()">
+      </div>
+      <div class="form-group">
         <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
           End date
           <span id="end-date-calc-note" style="font-size:10px;color:var(--ci-teal-light);font-weight:400;font-style:italic"></span>
         </label>
         <input id="f-end" type="date" placeholder="Auto-calculated from hours &amp; techs">
+      </div>
+      <div class="form-group form-full" style="margin-top:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <label class="form-label" style="margin:0">Work breaks <span style="font-weight:400;color:var(--text3);font-size:10px">(optional)</span></label>
+          <span style="font-size:10px;color:var(--text3)">Break days excluded from tech load & end date</span>
+        </div>
+        <div id="breaks-container"></div>
+        <button type="button" class="add-break-btn" onclick="addBreakRow()">+ Add break</button>
       </div>
       <div class="form-group">
         <label class="form-label">Total price ($)</label>
@@ -699,7 +739,8 @@ async function loadProjects() {
       hours: r.hours,
       techs: r.techs,
       price: r.price,
-      margin: r.margin
+      margin: r.margin,
+      breaks: r.breaks || []
     }));
     showStatus('Loaded ✓');
     renderAll();
@@ -711,7 +752,8 @@ async function loadProjects() {
 async function dbInsert(p) {
   const rows = await sbFetch('POST', 'projects', {
     name: p.name, start_date: p.start, end_date: p.end,
-    hours: p.hours, techs: p.techs, price: p.price, margin: p.margin
+    hours: p.hours, techs: p.techs, price: p.price, margin: p.margin,
+    breaks: p.breaks || []
   });
   return rows[0];
 }
@@ -719,7 +761,8 @@ async function dbInsert(p) {
 async function dbUpdate(p) {
   await sbFetch('PATCH', `projects?id=eq.${p.id}`, {
     name: p.name, start_date: p.start, end_date: p.end,
-    hours: p.hours, techs: p.techs, price: p.price, margin: p.margin
+    hours: p.hours, techs: p.techs, price: p.price, margin: p.margin,
+    breaks: p.breaks || []
   });
 }
 
@@ -863,12 +906,16 @@ function calcEndDate() {
 
   // tech days = total hours / (techs * 8hrs)
   const techDays = Math.ceil(hours / (techs * 8));
-  // techDays - 1 because day 1 is the start date itself
-  const endDate = addWeekdays(start, techDays - 1);
+  // Add break weekdays so end date extends past them
+  const breaks = collectBreaks();
+  const breakDays = countBreakWeekdays(breaks);
+  const totalDaysNeeded = techDays + breakDays - 1; // -1 because day 1 is start date itself
+  const endDate = addWeekdays(start, totalDaysNeeded);
   const endStr  = endDate.toISOString().split('T')[0];
 
   endFld.value = endStr;
-  if (note) note.textContent = `auto: ${techDays} weekday${techDays!==1?'s':''}`;
+  const breakNote = breakDays > 0 ? ` + ${breakDays} break day${breakDays!==1?'s':''}` : '';
+  if (note) note.textContent = `auto: ${techDays} work day${techDays!==1?'s':''}${breakNote}`;
 }
 
 
@@ -877,6 +924,7 @@ function openModal(id) {
   document.getElementById('modal-title').textContent = id ? 'Edit project' : 'Add project';
   const note = document.getElementById('end-date-calc-note');
   if (note) note.textContent = '';
+  clearBreakRows();
   if (id) {
     const p = projects.find(x=>x.id===id);
     document.getElementById('f-name').value  = p.name;
@@ -886,6 +934,8 @@ function openModal(id) {
     document.getElementById('f-end').value   = p.end;
     document.getElementById('f-price').value = p.price;
     document.getElementById('f-margin').value= p.margin;
+    // Load existing breaks
+    (p.breaks || []).forEach(b => addBreakRow(b.start, b.end));
   } else {
     ['f-name','f-start','f-hours','f-techs','f-end','f-price','f-margin'].forEach(f => document.getElementById(f).value='');
   }
@@ -901,20 +951,26 @@ async function saveProject() {
   const techs = parseInt(document.getElementById('f-techs').value);
   const price = parseFloat(document.getElementById('f-price').value);
   const margin = parseFloat(document.getElementById('f-margin').value);
+  const breaks = collectBreaks();
   if (!name||!start||!end||!hours||!techs||isNaN(price)||isNaN(margin)) { alert('Please fill in all fields.'); return; }
   if (new Date(end)<=new Date(start)) { alert('End date must be after start date.'); return; }
+  // Validate breaks
+  for (const b of breaks) {
+    if (!b.start || !b.end) { alert('Each break must have both a start and end date.'); return; }
+    if (new Date(b.end) < new Date(b.start)) { alert('Break end date must be on or after break start date.'); return; }
+  }
   closeModal();
   try {
     if (editId) {
       showStatus('Saving…');
       const p = projects.find(x=>x.id===editId);
-      Object.assign(p, {name,start,end,hours,techs,price,margin});
+      Object.assign(p, {name,start,end,hours,techs,price,margin,breaks});
       await dbUpdate(p);
       showStatus('Saved ✓');
     } else {
       showStatus('Adding project…');
-      const row = await dbInsert({name,start,end,hours,techs,price,margin});
-      projects.push({ id: row.id, name, start, end, hours, techs, price, margin });
+      const row = await dbInsert({name,start,end,hours,techs,price,margin,breaks});
+      projects.push({ id: row.id, name, start, end, hours, techs, price, margin, breaks });
       showStatus('Project added ✓');
     }
     renderAll();
@@ -936,9 +992,18 @@ function buildDailyTechLoad(data, minD, maxD) {
 
   data.forEach(p => {
     const ps = new Date(p.start), pe = new Date(p.end);
+    // Build set of break day timestamps for fast lookup
+    const breakDays = new Set();
+    (p.breaks || []).forEach(b => {
+      const bs = new Date(b.start), be = new Date(b.end);
+      for (let bd = new Date(bs); bd <= be; bd.setDate(bd.getDate()+1)) {
+        breakDays.add(bd.toISOString().split('T')[0]);
+      }
+    });
     for (let d = 0; d < days; d++) {
       const day = new Date(minD.getTime() + d * 864e5);
-      if (day >= ps && day <= pe) {
+      const dayStr = day.toISOString().split('T')[0];
+      if (day >= ps && day <= pe && !breakDays.has(dayStr)) {
         load[d] += p.techs;
         projects_on_day[d].push(p);
       }
@@ -1161,6 +1226,34 @@ function renderGantt(isPrint = false) {
     ctx.fillStyle = muted; ctx.font = '10px DM Mono, monospace'; ctx.textAlign = 'left';
     if (xR + 5 + 36 < W)
       ctx.fillText(fmtMoney(p.price, true), xR + 5, barY + barH / 2 + 3);
+
+    // ── Break bars overlaid on project bar ──
+    (p.breaks || []).forEach(b => {
+      const bxL = Math.max(xForDate(b.start), xL);
+      const bxR = Math.min(xForDate(b.end), xR);
+      if (bxR <= bxL) return;
+      const breakBarH = Math.ceil(barH / 2);
+      const breakBarY = barY + Math.floor((barH - breakBarH) / 2);
+      // Gray fill over the work bar
+      ctx.fillStyle = isPrint ? 'rgba(140,140,140,0.85)' : 'rgba(80,100,115,0.88)';
+      ctx.beginPath(); ctx.roundRect(bxL, breakBarY, bxR - bxL, breakBarH, 3); ctx.fill();
+      // Diagonal hatch lines for visual distinction
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(bxL, breakBarY, bxR - bxL, breakBarH, 3); ctx.clip();
+      ctx.strokeStyle = isPrint ? 'rgba(180,180,180,0.5)' : 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      for (let hx = bxL - breakBarH; hx < bxR + breakBarH; hx += 7) {
+        ctx.beginPath(); ctx.moveTo(hx, breakBarY); ctx.lineTo(hx + breakBarH, breakBarY + breakBarH); ctx.stroke();
+      }
+      ctx.restore();
+      // "BREAK" label if wide enough
+      const bw = bxR - bxL;
+      if (bw > 36) {
+        ctx.fillStyle = isPrint ? '#fff' : 'rgba(220,230,235,0.9)';
+        ctx.font = '500 9px DM Sans, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('BREAK', bxL + bw / 2, breakBarY + breakBarH / 2 + 3);
+      }
+    });
   });
 
   // ── Divider ──
@@ -1723,6 +1816,67 @@ function parseCSVLine(line) {
   result.push(cur);
   return result;
 }
+// ─────────────────────────────────────────────
+//  BREAK ROW HELPERS
+// ─────────────────────────────────────────────
+let breakRowCount = 0;
+
+function addBreakRow(startVal = '', endVal = '') {
+  const id = ++breakRowCount;
+  const container = document.getElementById('breaks-container');
+  const div = document.createElement('div');
+  div.className = 'break-row';
+  div.id = 'break-row-' + id;
+  div.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Break start</label>
+      <input type="date" id="break-start-${id}" value="${startVal}" oninput="calcEndDate()" onchange="calcEndDate()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Break end</label>
+      <input type="date" id="break-end-${id}" value="${endVal}" oninput="calcEndDate()" onchange="calcEndDate()">
+    </div>
+    <button type="button" class="break-remove" title="Remove break" onclick="removeBreakRow(${id})">✕</button>`;
+  container.appendChild(div);
+  calcEndDate();
+}
+
+function removeBreakRow(id) {
+  const el = document.getElementById('break-row-' + id);
+  if (el) el.remove();
+  calcEndDate();
+}
+
+function clearBreakRows() {
+  document.getElementById('breaks-container').innerHTML = '';
+  breakRowCount = 0;
+}
+
+function collectBreaks() {
+  const rows = document.querySelectorAll('.break-row');
+  const breaks = [];
+  rows.forEach(row => {
+    const startEl = row.querySelector('input[id^="break-start-"]');
+    const endEl   = row.querySelector('input[id^="break-end-"]');
+    if (startEl && endEl && startEl.value && endEl.value) {
+      breaks.push({ start: startEl.value, end: endEl.value });
+    }
+  });
+  return breaks;
+}
+
+function countBreakWeekdays(breaks) {
+  let total = 0;
+  breaks.forEach(b => {
+    const bs = new Date(b.start), be = new Date(b.end);
+    for (let d = new Date(bs); d <= be; d.setDate(d.getDate()+1)) {
+      const dow = d.getDay();
+      if (dow !== 0 && dow !== 6) total++;
+    }
+  });
+  return total;
+}
+
 function renderAll() {
   renderProjects();
   renderRevenue();
