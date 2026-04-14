@@ -478,14 +478,18 @@ select option { background: var(--bg3); }
         <div class="metrics-row" id="proj-metrics"></div>
 
         <div class="table-wrap">
-          <div class="table-header">
+          <div class="table-header" style="flex-wrap:wrap;gap:10px">
             <span class="table-header-title" id="proj-table-title">All projects</span>
-            <div class="filter-bar no-print" style="margin:0">
+            <div class="filter-bar no-print" style="margin:0;flex:1;justify-content:flex-end;flex-wrap:wrap;gap:8px">
+              <input id="proj-search" type="text" placeholder="Search projects…"
+                style="padding:6px 10px;font-size:12px;width:180px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);color:var(--text)"
+                oninput="renderProjects()">
               <select id="status-filter" onchange="renderProjects()">
-                <option value="all">All statuses</option>
-                <option value="active">Active</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="done">Complete</option>
+                <option value="active_upcoming">Active & upcoming</option>
+                <option value="all">All projects</option>
+                <option value="active">Active only</option>
+                <option value="upcoming">Upcoming only</option>
+                <option value="completed">Completed only</option>
               </select>
             </div>
           </div>
@@ -503,7 +507,7 @@ select option { background: var(--bg3); }
                   <th>Margin</th>
                   <th>Margin $</th>
                   <th>Status</th>
-                  <th class="no-print"></th>
+                  <th class="no-print">Actions</th>
                 </tr>
               </thead>
               <tbody id="proj-tbody"></tbody>
@@ -520,7 +524,8 @@ select option { background: var(--bg3); }
 
         <div class="filter-bar no-print" style="margin-bottom:16px">
           <select id="gantt-filter" onchange="renderGantt()">
-            <option value="all">All projects</option>
+            <option value="active_upcoming">Active &amp; upcoming</option>
+            <option value="all">All (incl. completed)</option>
             <option value="active">Active only</option>
             <option value="upcoming">Upcoming only</option>
           </select>
@@ -563,10 +568,19 @@ select option { background: var(--bg3); }
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
           <div class="rev-tabs no-print">
-            <button class="rev-tab active" id="rev-monthly-btn" onclick="setRevView('monthly')">Monthly</button>
+            <button class="rev-tab active" id="rev-monthly-btn" onclick="setRevView('monthly')">Full year</button>
+            <button class="rev-tab" id="rev-single-btn" onclick="setRevView('single')">Single month</button>
             <button class="rev-tab" id="rev-ytd-btn" onclick="setRevView('ytd')">Year to date</button>
           </div>
           <div style="display:flex;gap:8px;align-items:center" class="no-print">
+            <select id="rev-month" onchange="renderRevenue()" style="font-size:12px;padding:6px 10px;display:none">
+              <option value="0">January</option><option value="1">February</option>
+              <option value="2">March</option><option value="3">April</option>
+              <option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option>
+              <option value="8">September</option><option value="9">October</option>
+              <option value="10">November</option><option value="11">December</option>
+            </select>
             <select id="rev-year" onchange="renderRevenue()" style="font-size:12px;padding:6px 10px"></select>
           </div>
         </div>
@@ -740,7 +754,8 @@ async function loadProjects() {
       techs: r.techs,
       price: r.price,
       margin: r.margin,
-      breaks: r.breaks || []
+      breaks: r.breaks || [],
+      completed: r.completed || false
     }));
     showStatus('Loaded ✓');
     renderAll();
@@ -811,8 +826,19 @@ function showSection(name) {
 // ─────────────────────────────────────────────
 function renderProjects() {
   const filter = document.getElementById('status-filter').value;
+  const searchEl = document.getElementById('proj-search');
+  const searchQ = searchEl ? searchEl.value.trim().toLowerCase() : '';
   let data = [...projects].sort((a,b) => new Date(b.start)-new Date(a.start));
-  if (filter !== 'all') data = data.filter(p => getStatus(p)===filter);
+
+  // Status filter
+  if (filter === 'active_upcoming') data = data.filter(p => !p.completed && (getStatus(p)==='active' || getStatus(p)==='upcoming'));
+  else if (filter === 'active') data = data.filter(p => !p.completed && getStatus(p)==='active');
+  else if (filter === 'upcoming') data = data.filter(p => !p.completed && getStatus(p)==='upcoming');
+  else if (filter === 'completed') data = data.filter(p => p.completed);
+  // 'all' shows everything including completed
+
+  // Search filter
+  if (searchQ) data = data.filter(p => p.name.toLowerCase().includes(searchQ));
 
   const totalRev = data.reduce((s,p)=>s+p.price,0);
   const totalMargin = data.reduce((s,p)=>s+(p.price*p.margin/100),0);
@@ -848,8 +874,10 @@ function renderProjects() {
   document.getElementById('proj-tbody').innerHTML = data.map(p => {
     const st = getStatus(p);
     const marginDollar = Math.round(p.price * p.margin / 100);
-    return `<tr>
-      <td><div class="proj-name">${p.name}</div></td>
+    const rowStyle = p.completed ? 'opacity:0.55' : '';
+    const completedBadge = p.completed ? '<span class="badge" style="background:rgba(77,168,196,0.15);color:#4da8c4;margin-left:6px">✓ done</span>' : '';
+    return `<tr style="${rowStyle}">
+      <td><div class="proj-name">${p.name}${completedBadge}</div></td>
       <td class="mono">${fmtDate(p.start)}</td>
       <td class="mono">${fmtDate(p.end)}</td>
       <td>${p.hours}h</td>
@@ -859,8 +887,9 @@ function renderProjects() {
       <td>${p.margin}%</td>
       <td class="mono">${fmtMoney(marginDollar)}</td>
       <td><span class="badge badge-${st}">${st}</span></td>
-      <td class="no-print" style="display:flex;gap:6px">
+      <td class="no-print" style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-sm" onclick="openModal(${p.id})">Edit</button>
+        <button class="btn btn-sm" style="${p.completed?'color:#e07a52;border-color:rgba(224,122,82,0.3)':''}" onclick="toggleComplete(${p.id})">${p.completed?'Reopen':'✓ Complete'}</button>
         <button class="btn btn-sm btn-danger" onclick="deleteProject(${p.id})">✕</button>
       </td>
     </tr>`;
@@ -876,6 +905,19 @@ async function deleteProject(id) {
     showStatus('Deleted ✓');
     renderAll();
   } catch(e) { showStatus('Delete failed: ' + e.message, true); }
+}
+
+async function toggleComplete(id) {
+  const p = projects.find(x=>x.id===id);
+  if (!p) return;
+  const newVal = !p.completed;
+  try {
+    showStatus(newVal ? 'Marking complete…' : 'Reopening project…');
+    await sbFetch('PATCH', `projects?id=eq.${id}`, { completed: newVal });
+    p.completed = newVal;
+    showStatus(newVal ? 'Marked complete ✓' : 'Project reopened ✓');
+    renderAll();
+  } catch(e) { showStatus('Update failed: ' + e.message, true); }
 }
 
 // ─────────────────────────────────────────────
@@ -1019,8 +1061,10 @@ function renderGantt(isPrint = false) {
   const filterEl = document.getElementById('gantt-filter');
   const filter = filterEl ? filterEl.value : 'all';
   let data = [...projects].sort((a,b)=>new Date(b.start)-new Date(a.start));
-  if (filter==='active') data=data.filter(p=>getStatus(p)==='active');
-  if (filter==='upcoming') data=data.filter(p=>getStatus(p)==='upcoming');
+  if (filter==='active_upcoming') data=data.filter(p=>!p.completed && (getStatus(p)==='active'||getStatus(p)==='upcoming'));
+  else if (filter==='active') data=data.filter(p=>!p.completed && getStatus(p)==='active');
+  else if (filter==='upcoming') data=data.filter(p=>!p.completed && getStatus(p)==='upcoming');
+  // 'all' shows everything
   if (!data.length) { canvas.width=100; canvas.height=60; return; }
 
   const capacityEl = document.getElementById('team-capacity');
@@ -1399,7 +1443,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function setRevView(v) {
   revView = v;
   document.getElementById('rev-monthly-btn').classList.toggle('active', v==='monthly');
+  document.getElementById('rev-single-btn').classList.toggle('active', v==='single');
   document.getElementById('rev-ytd-btn').classList.toggle('active', v==='ytd');
+  const monthSel = document.getElementById('rev-month');
+  if (monthSel) {
+    monthSel.style.display = v==='single' ? '' : 'none';
+    // Default month selector to current month when switching to single view
+    if (v==='single' && monthSel.value === '') monthSel.value = new Date().getMonth();
+  }
   renderRevenue();
 }
 
@@ -1410,7 +1461,13 @@ function renderRevenue() {
   const curYear = parseInt(yearSel.value) || years[0];
   yearSel.innerHTML = years.map(y=>`<option value="${y}" ${y===curYear?'selected':''}>${y}</option>`).join('');
 
+  // Month selector — default to current month
+  const monthSel = document.getElementById('rev-month');
+  if (monthSel && monthSel.value === '') monthSel.value = new Date().getMonth();
+  const curMonth = monthSel ? parseInt(monthSel.value) : new Date().getMonth();
+
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthsFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   function projectMonthly(p) {
     const start = new Date(p.start), end = new Date(p.end);
@@ -1442,6 +1499,41 @@ function renderRevenue() {
     marginPctData = revData.map((r,i)=>r?+(marginData[i]/r*100).toFixed(1):0);
     document.getElementById('rev-bar-title').textContent = 'YTD cumulative revenue & margin ($)';
     document.getElementById('margin-pct-title').textContent = 'YTD margin %';
+  } else if (revView==='single') {
+    // Single month — show weekly breakdown (weeks 1-4/5 of that month)
+    const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
+    const weekLabels = [], weekRevData = [], weekMarginData = [], weekMarginPctData = [];
+    // Break month into weekly buckets starting from day 1
+    let dayStart = 1;
+    let wkNum = 1;
+    while (dayStart <= daysInMonth) {
+      const dayEnd = Math.min(dayStart + 6, daysInMonth);
+      weekLabels.push(`Wk ${wkNum} (${months[curMonth]} ${dayStart}–${dayEnd})`);
+      const wkStart = new Date(curYear, curMonth, dayStart);
+      const wkEnd   = new Date(curYear, curMonth, dayEnd, 23, 59, 59);
+      let wRev = 0, wMargin = 0;
+      projects.forEach(p => {
+        const ps = new Date(p.start), pe = new Date(p.end);
+        const totalMs = pe - ps || 1;
+        const oS = Math.max(ps, wkStart), oE = Math.min(pe, wkEnd);
+        if (oS <= oE) {
+          const contrib = p.price * (oE - oS) / totalMs;
+          wRev += contrib;
+          wMargin += contrib * p.margin / 100;
+        }
+      });
+      weekRevData.push(Math.round(wRev));
+      weekMarginData.push(Math.round(wMargin));
+      weekMarginPctData.push(wRev ? +((wMargin/wRev)*100).toFixed(1) : 0);
+      dayStart += 7;
+      wkNum++;
+    }
+    labels = weekLabels;
+    revData = weekRevData;
+    marginData = weekMarginData;
+    marginPctData = weekMarginPctData;
+    document.getElementById('rev-bar-title').textContent = `${monthsFull[curMonth]} ${curYear} — weekly revenue & margin ($)`;
+    document.getElementById('margin-pct-title').textContent = `${monthsFull[curMonth]} ${curYear} — margin %`;
   } else {
     labels = months;
     revData = revM.map(Math.round);
