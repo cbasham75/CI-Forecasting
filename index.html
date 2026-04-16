@@ -302,6 +302,18 @@ select option { background: var(--bg3); }
 }
 .add-break-btn:hover { border-color: var(--ci-teal-light); color: var(--ci-teal-light); background: rgba(77,168,196,0.06); }
 
+/* WON / PENDING TOGGLE */
+.status-toggle { display:flex; border:1px solid var(--border2); border-radius:var(--radius-sm); overflow:hidden; }
+.status-toggle-btn {
+  flex:1; padding:8px 0; font-size:12px; font-weight:500; cursor:pointer;
+  border:none; background:transparent; color:var(--text2); font-family:inherit;
+  transition:all .15s; text-align:center;
+}
+.status-toggle-btn.won.active  { background:#e05a22; color:#fff; }
+.status-toggle-btn.pend.active { background:rgba(187,107,217,0.2); color:#bb6bd9; border:none; }
+.status-toggle-btn:not(.active):hover { background:var(--bg4); }
+.badge-pending { background:rgba(187,107,217,0.15); color:#bb6bd9; }
+
 /* FILTER BAR */
 .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
 .filter-bar select { padding: 7px 10px; font-size: 12px; min-width: 140px; }
@@ -528,6 +540,7 @@ select option { background: var(--bg3); }
             <option value="all">All (incl. completed)</option>
             <option value="active">Active only</option>
             <option value="upcoming">Upcoming only</option>
+            <option value="pending">Pending only</option>
           </select>
           <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px;margin-left:8px">
             Team capacity:
@@ -550,6 +563,7 @@ select option { background: var(--bg3); }
           <div class="gantt-legend-item"><div class="legend-dot" style="background:#4da8c4"></div>Active</div>
           <div class="gantt-legend-item"><div class="legend-dot" style="background:#e07a52"></div>Upcoming</div>
           <div class="gantt-legend-item"><div class="legend-dot" style="background:#2d6f84"></div>Complete</div>
+          <div class="gantt-legend-item"><div class="legend-dot" style="background:transparent;border:2px dashed #bb6bd9"></div>Pending</div>
         </div>
 
         <!-- Tooltip for hover -->
@@ -653,6 +667,13 @@ select option { background: var(--bg3); }
         <label class="form-label">Project name</label>
         <input id="f-name" type="text" placeholder="e.g. HVAC Retrofit – Warehouse A">
       </div>
+      <div class="form-group form-full">
+        <label class="form-label" style="margin-bottom:6px">Project status</label>
+        <div class="status-toggle">
+          <button type="button" class="status-toggle-btn won active" id="toggle-won" onclick="setProjectStatus('won')">✓ Won</button>
+          <button type="button" class="status-toggle-btn pend" id="toggle-pending" onclick="setProjectStatus('pending')">◌ Pending</button>
+        </div>
+      </div>
       <div class="form-group">
         <label class="form-label">Total tech hours</label>
         <input id="f-hours" type="number" placeholder="e.g. 160" min="1" oninput="calcEndDate()" onchange="calcEndDate()">
@@ -755,7 +776,8 @@ async function loadProjects() {
       price: r.price,
       margin: r.margin,
       breaks: r.breaks || [],
-      completed: r.completed || false
+      completed: r.completed || false,
+      pending: r.pending || false
     }));
     showStatus('Loaded ✓');
     renderAll();
@@ -768,7 +790,7 @@ async function dbInsert(p) {
   const rows = await sbFetch('POST', 'projects', {
     name: p.name, start_date: p.start, end_date: p.end,
     hours: p.hours, techs: p.techs, price: p.price, margin: p.margin,
-    breaks: p.breaks || []
+    breaks: p.breaks || [], pending: p.pending || false
   });
   return rows[0];
 }
@@ -777,7 +799,7 @@ async function dbUpdate(p) {
   await sbFetch('PATCH', `projects?id=eq.${p.id}`, {
     name: p.name, start_date: p.start, end_date: p.end,
     hours: p.hours, techs: p.techs, price: p.price, margin: p.margin,
-    breaks: p.breaks || []
+    breaks: p.breaks || [], pending: p.pending || false
   });
 }
 
@@ -834,6 +856,7 @@ function renderProjects() {
   if (filter === 'active_upcoming') data = data.filter(p => !p.completed && (getStatus(p)==='active' || getStatus(p)==='upcoming'));
   else if (filter === 'active') data = data.filter(p => !p.completed && getStatus(p)==='active');
   else if (filter === 'upcoming') data = data.filter(p => !p.completed && getStatus(p)==='upcoming');
+  else if (filter === 'pending') data = data.filter(p => p.pending && !p.completed);
   else if (filter === 'completed') data = data.filter(p => p.completed);
   // 'all' shows everything including completed
 
@@ -876,8 +899,9 @@ function renderProjects() {
     const marginDollar = Math.round(p.price * p.margin / 100);
     const rowStyle = p.completed ? 'opacity:0.55' : '';
     const completedBadge = p.completed ? '<span class="badge" style="background:rgba(77,168,196,0.15);color:#4da8c4;margin-left:6px">✓ done</span>' : '';
+    const pendingBadge = (!p.completed && p.pending) ? '<span class="badge badge-pending" style="margin-left:6px">◌ pending</span>' : '';
     return `<tr style="${rowStyle}">
-      <td><div class="proj-name">${p.name}${completedBadge}</div></td>
+      <td><div class="proj-name">${p.name}${completedBadge}${pendingBadge}</div></td>
       <td class="mono">${fmtDate(p.start)}</td>
       <td class="mono">${fmtDate(p.end)}</td>
       <td>${p.hours}h</td>
@@ -961,6 +985,11 @@ function calcEndDate() {
 }
 
 
+function setProjectStatus(val) {
+  document.getElementById('toggle-won').classList.toggle('active', val==='won');
+  document.getElementById('toggle-pending').classList.toggle('active', val==='pending');
+}
+
 function openModal(id) {
   editId = id || null;
   document.getElementById('modal-title').textContent = id ? 'Edit project' : 'Add project';
@@ -976,10 +1005,11 @@ function openModal(id) {
     document.getElementById('f-end').value   = p.end;
     document.getElementById('f-price').value = p.price;
     document.getElementById('f-margin').value= p.margin;
-    // Load existing breaks
+    setProjectStatus(p.pending ? 'pending' : 'won');
     (p.breaks || []).forEach(b => addBreakRow(b.start, b.end));
   } else {
     ['f-name','f-start','f-hours','f-techs','f-end','f-price','f-margin'].forEach(f => document.getElementById(f).value='');
+    setProjectStatus('won');
   }
   document.getElementById('modal').classList.add('open');
 }
@@ -994,8 +1024,9 @@ async function saveProject() {
   const price = parseFloat(document.getElementById('f-price').value);
   const margin = parseFloat(document.getElementById('f-margin').value);
   const breaks = collectBreaks();
+  const pending = document.getElementById('toggle-pending').classList.contains('active');
   if (!name||!start||!end||!hours||!techs||isNaN(price)||isNaN(margin)) { alert('Please fill in all fields.'); return; }
-  if (new Date(end)<=new Date(start)) { alert('End date must be after start date.'); return; }
+  if (new Date(end)<new Date(start)) { alert('End date cannot be before start date.'); return; }
   // Validate breaks
   for (const b of breaks) {
     if (!b.start || !b.end) { alert('Each break must have both a start and end date.'); return; }
@@ -1006,13 +1037,13 @@ async function saveProject() {
     if (editId) {
       showStatus('Saving…');
       const p = projects.find(x=>x.id===editId);
-      Object.assign(p, {name,start,end,hours,techs,price,margin,breaks});
+      Object.assign(p, {name,start,end,hours,techs,price,margin,breaks,pending});
       await dbUpdate(p);
       showStatus('Saved ✓');
     } else {
       showStatus('Adding project…');
-      const row = await dbInsert({name,start,end,hours,techs,price,margin,breaks});
-      projects.push({ id: row.id, name, start, end, hours, techs, price, margin, breaks });
+      const row = await dbInsert({name,start,end,hours,techs,price,margin,breaks,pending});
+      projects.push({ id: row.id, name, start, end, hours, techs, price, margin, breaks, pending });
       showStatus('Project added ✓');
     }
     renderAll();
@@ -1064,6 +1095,7 @@ function renderGantt(isPrint = false) {
   if (filter==='active_upcoming') data=data.filter(p=>!p.completed && (getStatus(p)==='active'||getStatus(p)==='upcoming'));
   else if (filter==='active') data=data.filter(p=>!p.completed && getStatus(p)==='active');
   else if (filter==='upcoming') data=data.filter(p=>!p.completed && getStatus(p)==='upcoming');
+  else if (filter==='pending') data=data.filter(p=>p.pending && !p.completed);
   // 'all' shows everything
   if (!data.length) { canvas.width=100; canvas.height=60; return; }
 
@@ -1140,7 +1172,8 @@ function renderGantt(isPrint = false) {
   const barCol= {
     active:   isPrint ? '#1a5f72' : '#4da8c4',
     upcoming: isPrint ? '#a03d18' : '#e07a52',
-    done:     isPrint ? '#4a7a88' : '#2d6f84'
+    done:     isPrint ? '#4a7a88' : '#2d6f84',
+    pending:  isPrint ? '#7a4a9a' : '#bb6bd9'
   };
   const overC = isPrint ? '#c0392b' : '#e05a22';
   const capC  = '#e05a22';
@@ -1247,16 +1280,28 @@ function renderGantt(isPrint = false) {
     const barW  = Math.max(xR - xL, 6);
     const barH  = ROW - 14;
     const barY  = y + 7;
-    const col   = barCol[getStatus(p)];
+    const col   = p.pending && !p.completed ? barCol.pending : barCol[getStatus(p)];
 
-    if (!isPrint) { ctx.shadowColor = col; ctx.shadowBlur = 6; }
-    ctx.fillStyle = col;
-    ctx.beginPath(); ctx.roundRect(xL, barY, barW, barH, 4); ctx.fill();
-    ctx.shadowBlur = 0;
+    if (p.pending && !p.completed) {
+      // Pending: muted fill + dashed border
+      ctx.fillStyle = isPrint ? 'rgba(122,74,154,0.18)' : 'rgba(187,107,217,0.18)';
+      ctx.beginPath(); ctx.roundRect(xL, barY, barW, barH, 4); ctx.fill();
+      ctx.strokeStyle = barCol.pending;
+      ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.roundRect(xL, barY, barW, barH, 4); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      if (!isPrint) { ctx.shadowColor = col; ctx.shadowBlur = 6; }
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.roundRect(xL, barY, barW, barH, 4); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
 
     // Techs badge
     if (barW > 38) {
-      ctx.fillStyle = isPrint ? '#fff' : 'rgba(0,0,0,0.7)';
+      ctx.fillStyle = p.pending && !p.completed
+        ? (isPrint ? '#7a4a9a' : '#bb6bd9')
+        : (isPrint ? '#fff' : 'rgba(0,0,0,0.7)');
       ctx.font = '500 11px DM Mono, monospace'; ctx.textAlign = 'center';
       ctx.fillText(p.techs + 'T', xL + barW / 2, barY + barH / 2 + 4);
     }
